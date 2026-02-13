@@ -86,10 +86,13 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('auto_start')),
     )
 
+    publish_tf_arg = DeclareLaunchArgument('publish_tf', default_value='true')
+
     tf2_node = Node(package='tf2_ros',
                     executable='static_transform_publisher',
                     name='static_tf_pub_laser',
                     arguments=['0.12', '0', '0','0', '0', '0', 'base_link','laser_frame'],
+                    condition=IfCondition(LaunchConfiguration('publish_tf'))
                     )
 
 
@@ -115,6 +118,7 @@ def generate_launch_description():
         DeclareLaunchArgument('auto_start', default_value='true'),
         DeclareLaunchArgument('node_name', default_value='urg_node2'),
         DeclareLaunchArgument('scan_topic_name', default_value='scan'),
+        publish_tf_arg,
         lifecycle_node,
         urg_node2_node_configure_event_handler,
         urg_node2_node_activate_event_handler,

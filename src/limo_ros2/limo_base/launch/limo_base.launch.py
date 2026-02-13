@@ -47,6 +47,7 @@ def generate_launch_description():
                 'odom_topic_name': launch.substitutions.LaunchConfiguration('odom_topic_name'),
                 'pub_odom_tf': launch.substitutions.LaunchConfiguration('pub_odom_tf'),
                 'control_rate': launch.substitutions.LaunchConfiguration('control_rate'),
+                'use_mcnamu': True,
         }],
         namespace='limo'
     )

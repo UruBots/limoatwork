@@ -80,7 +80,8 @@ def generate_launch_description():
                 get_package_share_directory('urg_node2'),
                 'launch/urg_node2.launch.py'
             )
-        )
+        ),
+        launch_arguments={'publish_tf': 'false'}.items()
     )
 
     # -----------------------------
@@ -90,7 +91,7 @@ def generate_launch_description():
 
     laser_filters_yaml = os.path.join(
         get_package_share_directory(BRINGUP_PKG),
-        'config',
+        'config_files',
         'laser_filters.yaml'
     )
 
