@@ -1,0 +1,64 @@
+{
+  "name": "limoatwork-ros2-humble",
+  "dockerFile": "Dockerfile",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "runArgs": [
+    "--network=host",
+    "--ipc=host",
+    // Pass all NVIDIA GPUs to the container.
+    // Requires nvidia-container-toolkit on the host:
+    //   sudo apt-get install nvidia-container-toolkit
+    //   sudo nvidia-ctk runtime configure --runtime=docker
+    //   sudo systemctl restart docker
+    "--gpus=all",
+    "-v=/dev:/dev",
+    "--privileged",
+    "--security-opt=seccomp:unconfined",
+    "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
+    "--volume=${localEnv:XAUTHORITY}:/home/ros/.Xauthority",
+    "--device-cgroup-rule=a *:* rmw"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "XAUTHORITY": "/home/ros/.Xauthority",
+    "PYTHONPATH": "${containerWorkspaceFolder}/src:${PYTHONPATH}",
+    "Python3_EXECUTABLE": "/usr/bin/python3",
+    // ── NVIDIA GPU ──────────────────────────────────────────────────────────
+    // Expose ALL NVIDIA devices and enable compute + graphics + display caps.
+    "NVIDIA_VISIBLE_DEVICES": "all",
+    "NVIDIA_DRIVER_CAPABILITIES": "compute,graphics,utility,display",
+    // ── PRIME render offload (hybrid Intel + NVIDIA laptop) ─────────────────
+    // Routes OpenGL/Vulkan rendering to the discrete NVIDIA GPU instead of
+    // the Intel iGPU. Gazebo Ignition benefits greatly from this.
+    "__NV_PRIME_RENDER_OFFLOAD": "1",
+    "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
+    // Disable Vulkan vertical-sync to avoid capping Gazebo FPS at display rate.
+    "__GL_SYNC_TO_VBLANK": "0"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "ros"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-iot.vscode-ros",
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "twxs.cmake",
+        "redhat.vscode-yaml",
+        "dotjoshjohnson.xml",
+        "streetsidesoftware.code-spell-checker"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "remoteUser": "ros"
+}

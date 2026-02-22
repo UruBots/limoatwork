@@ -61,7 +61,7 @@ def generate_launch_description():
             'bt_xml_file',
             default_value=os.path.join(
                 get_package_share_directory('nav2_bt_navigator'),
-                'behavior_trees', 'navigate_w_replanning_and_recovery.xml'),
+                'behavior_trees', 'navigate_to_pose_w_replanning_and_recovery.xml'),
             description='Full path to the behavior tree xml file to use'),
 
         DeclareLaunchArgument(
@@ -92,11 +92,11 @@ def generate_launch_description():
             remappings=remappings),
 
         Node(
-            package='nav2_recoveries',
-            executable='recoveries_server',
-            name='recoveries_server',
+            package='nav2_behaviors',
+            executable='behavior_server',
+            name='behavior_server',
             output='screen',
-            parameters=[{'use_sim_time': use_sim_time}],
+            parameters=[configured_params],
             remappings=remappings),
 
         Node(
@@ -125,7 +125,7 @@ def generate_launch_description():
                         {'autostart': autostart},
                         {'node_names': ['controller_server',
                                         'planner_server',
-                                        'recoveries_server',
+                                        'behavior_server',
                                         'bt_navigator',
                                         'waypoint_follower']}]),
     ])

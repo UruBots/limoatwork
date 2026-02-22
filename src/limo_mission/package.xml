@@ -19,7 +19,6 @@
   <depend>nav2_msgs</depend>
 
   <!-- If you already use it elsewhere, keep it -->
-  <depend>nav2_simple_commander</depend>
 
   <!-- Action / interface generation -->
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -1,0 +1,119 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="atwork_2024_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <plugin
+      filename="gz-sim-imu-system"
+      name="gz::sim::systems::Imu">
+    </plugin>
+    <!-- A global light source -->
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Ground Plane</uri>
+    </include>
+
+    <!-- Arena Walls (Extended layout to match pose_dict) -->
+    <model name="arena_walls">
+      <static>true</static>
+      <link name="link">
+        <collision name="wall1">
+          <pose>3 4.5 0.1 0 0 0</pose>
+          <geometry><box><size>10 0.05 0.2</size></box></geometry>
+        </collision>
+        <visual name="wall1_v">
+          <pose>3 4.5 0.1 0 0 0</pose>
+          <geometry><box><size>10 0.05 0.2</size></box></geometry>
+        </visual>
+        <collision name="wall2">
+          <pose>3 -4.5 0.1 0 0 0</pose>
+          <geometry><box><size>10 0.05 0.2</size></box></geometry>
+        </collision>
+        <visual name="wall2_v">
+          <pose>3 -4.5 0.1 0 0 0</pose>
+          <geometry><box><size>10 0.05 0.2</size></box></geometry>
+        </visual>
+      </link>
+    </model>
+
+    <!-- START Area (Green Tape) -->
+    <model name="start_area">
+      <static>true</static>
+      <pose>0 -1 0.001 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>1 1</size></plane></geometry>
+          <material><ambient>0 1 0 1</ambient><diffuse>0 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Workstations from mission_ws.py -->
+    <include>
+      <name>WS01</name>
+      <uri>model://table_10cm</uri>
+      <pose>2.15 -0.35 0.05 0 0 -0.66</pose>
+    </include>
+    <include>
+      <name>WS02</name>
+      <uri>model://table_10cm</uri>
+      <pose>1.85 1.20 0.05 0 0 0.30</pose>
+    </include>
+
+    <!-- Objects on WS01 -->
+    <include>
+      <name>obj_f20_1</name>
+      <uri>model://f20_20</uri>
+      <pose>2.15 -0.35 0.15 0 0 0</pose>
+    </include>
+    <include>
+      <name>obj_m20_1</name>
+      <uri>model://nut_m20</uri>
+      <pose>2.1 -0.3 0.15 0 0 0</pose>
+    </include>
+
+    <!-- Objects on WS02 -->
+    <include>
+      <name>obj_s40_1</name>
+      <uri>model://s40_40</uri>
+      <pose>1.85 1.20 0.15 0 0 0</pose>
+    </include>
+
+    <!-- ATTC Cube on WS02 -->
+    <include>
+      <name>attc_1</name>
+      <uri>model://attc_cube</uri>
+      <pose>1.9 1.25 0.15 0 0 0</pose>
+    </include>
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>4.0 1.0 10.0 0 1.57 -1.57</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
+  </world>
+</sdf>

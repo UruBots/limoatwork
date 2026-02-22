@@ -12,7 +12,7 @@ from vision_msgs.msg import Detection2DArray
 from cv_bridge import CvBridge
 import math
 
-#Nuevos imports
+# Additional imports
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from geometry_msgs.msg import Twist
@@ -22,7 +22,7 @@ from rclpy.qos import qos_profile_sensor_data
 class LimoAtWorkNode(Node):
     def __init__(self):
         super().__init__('limo_atwork_node')
-        # Distancias
+        # Distances
         self.filtered_angle = 0.0
         self.prev_error = 0.0
 
@@ -34,22 +34,22 @@ class LimoAtWorkNode(Node):
         self.final_approach_distance = 0.10
 
         # ---- LATERAL control ----
-        self.lateral_target_distance = 0.15  # 5 cm
+        self.lateral_target_distance = 0.15  # 15 cm
         self.lateral_ok_counter = 0
         self.lateral_ok_required = 4
         self.max_lateral_speed = 0.08
 
-        # Tolerancias
+        # Tolerances
         self.align_window_deg = 15.0
-        self.angle_tol = 0.18   # 10°
+        self.angle_tol = 0.18   # ~10°
         self.align_ok_counter = 0
         self.align_ok_required = 3
 
-        # Estado
+        # State
         self.docking_phase = "APPROACH"
         self.initial_pub = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
         self.goal_pub = self.create_publisher(PoseStamped, '/goal_pose', 10)
-        #Nueva instancia
+        # Action client instance
         self.nav_to_pose_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
     
         self.arm_pub = self.create_publisher(JointTrajectory, '/goal_joint_trajectory', 10)
@@ -92,7 +92,7 @@ class LimoAtWorkNode(Node):
             0.0, 0.0, 0.0, 0.0, 0.0, 0.06853891945200942
         ]
         self.initial_pub.publish(msg)
-        self.get_logger().info('Initial pose publicada una vez.')
+        self.get_logger().info('Initial pose published.')
 
     def send_goal(self, x, y, z, orientation: Quaternion):
         goal_msg = NavigateToPose.Goal()
@@ -103,34 +103,34 @@ class LimoAtWorkNode(Node):
         goal_msg.pose.pose.position.z = z
         goal_msg.pose.pose.orientation = orientation
 
-        self.get_logger().info("Esperando al servidor de acciones 'navigate_to_pose'...")
+        self.get_logger().info("Waiting for 'navigate_to_pose' action server...")
         self.nav_to_pose_client.wait_for_server()
-        self.get_logger().info("✅ Servidor disponible.")
+        self.get_logger().info("✅ Server available.")
 
-        self.get_logger().info(f"Enviando meta a x={x:.2f}, y={y:.2f}")
+        self.get_logger().info(f"Sending goal to x={x:.2f}, y={y:.2f}")
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg)
         def goal_response_callback(future):
             goal_handle = future.result()
             if not goal_handle.accepted:
-                self.get_logger().error('⚠ Meta rechazada por el servidor.')
+                self.get_logger().error('⚠ Goal rejected by server.')
                 return
 
-            self.get_logger().info('✅ Meta aceptada. Esperando resultado...')
+            self.get_logger().info('✅ Goal accepted. Waiting for result...')
             result_future = goal_handle.get_result_async()
 
             def result_callback(result_future):
                 result = result_future.result()
                 status = result.status
                 if status == 4:  # SUCCEEDED
-                    self.get_logger().info('🏁 Meta alcanzada con éxito.')
+                    self.get_logger().info('🏁 Goal reached successfully.')
                     time.sleep(5.0)
                     self.start_docking(distance=0.3)
                 elif status == 5:  # CANCELED
-                    self.get_logger().warn('⚠ Navegación cancelada.')
+                    self.get_logger().warn('⚠ Navigation cancelled.')
                 elif status == 6:  # ABORTED
-                    self.get_logger().error('❌ Navegación abortada.')
+                    self.get_logger().error('❌ Navigation aborted.')
                 else:
-                    self.get_logger().warn(f'🤔 Estado desconocido: {status}')
+                    self.get_logger().warn(f'🤔 Unknown status: {status}')
 
             result_future.add_done_callback(result_callback)
 
@@ -145,33 +145,33 @@ class LimoAtWorkNode(Node):
         goal_msg.pose.pose.position.z = z
         goal_msg.pose.pose.orientation = orientation
 
-        self.get_logger().info("Esperando al servidor de acciones 'navigate_to_pose'...")
+        self.get_logger().info("Waiting for 'navigate_to_pose' action server...")
         self.nav_to_pose_client.wait_for_server()
-        self.get_logger().info("✅ Servidor disponible.")
+        self.get_logger().info("✅ Server available.")
 
-        self.get_logger().info(f"Enviando meta a x={x:.2f}, y={y:.2f}")
+        self.get_logger().info(f"Sending goal to x={x:.2f}, y={y:.2f}")
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg)
 
         def goal_response_callback(future):
             goal_handle = future.result()
             if not goal_handle.accepted:
-                self.get_logger().error('⚠️ Meta rechazada por el servidor.')
+                self.get_logger().error('⚠️ Goal rejected by server.')
                 return
 
-            self.get_logger().info('✅ Meta aceptada. Esperando resultado...')
+            self.get_logger().info('✅ Goal accepted. Waiting for result...')
             result_future = goal_handle.get_result_async()
 
             def result_callback(result_future):
                 result = result_future.result()
                 status = result.status
                 if status == 4:  # SUCCEEDED
-                    self.get_logger().info('🏁 Meta alcanzada con éxito.')
+                    self.get_logger().info('🏁 Goal reached successfully.')
                 elif status == 5:  # CANCELED
-                    self.get_logger().warn('⚠️ Navegación cancelada.')
+                    self.get_logger().warn('⚠️ Navigation cancelled.')
                 elif status == 6:  # ABORTED
-                    self.get_logger().error('❌ Navegación abortada.')
+                    self.get_logger().error('❌ Navigation aborted.')
                 else:
-                    self.get_logger().warn(f'🤔 Estado desconocido: {status}')
+                    self.get_logger().warn(f'🤔 Unknown status: {status}')
 
             result_future.add_done_callback(result_callback)
 
@@ -236,7 +236,7 @@ class LimoAtWorkNode(Node):
         if len(xs) < 10:
             return None
 
-        # Ajuste lineal y = mx + c
+        # Linear fit y = mx + c
         A = np.vstack([xs, np.ones(len(xs))]).T
         m, c = np.linalg.lstsq(A, ys, rcond=None)[0]
 
@@ -249,14 +249,14 @@ class LimoAtWorkNode(Node):
 
         self.safe_distance = distance
         self.docking_active = True
-        self.docking_phase = "APPROACH"   # ← RESET DE FASE
+        self.docking_phase = "APPROACH"   # reset phase
 
         self.docking_timer = self.create_timer(
             0.05, self.docking_step   # 20 Hz
         )
 
         self.get_logger().info(
-            f"🔗 Docking iniciado (distancia objetivo {distance:.2f} m)"
+            f"🔗 Docking started (target distance {distance:.2f} m)"
         )
 
 
@@ -284,7 +284,7 @@ class LimoAtWorkNode(Node):
         cmd = Twist()
 
         # =========================
-        # FASE 1: APROXIMACIÓN
+        # PHASE 1: APPROACH
         # =========================
         if self.docking_phase == "APPROACH":
 
@@ -293,25 +293,25 @@ class LimoAtWorkNode(Node):
             cmd = Twist()
 
             if avg_dist > self.final_approach_distance:
-                # velocidad proporcional suave
+                # proportional soft speed
                 cmd.linear.x = min(0.15, max(0.05, 0.6 * error_dist))
                 cmd.angular.z = 0.0
                 self.cmd_pub.publish(cmd)
                 self.stop_counter = 0
 
             else:
-                # ya está cerca → pasar a STOP_NEAR
+                # close enough → transition to STOP_NEAR
                 self.docking_phase = "STOP_NEAR"
-                self.get_logger().info("⏸ Cerca de la caja. Esperando estabilidad.")
+                self.get_logger().info("⏸ Near the box. Waiting for stability.")
 
             return
-        #Secuencia 
+        # Sequence
         if self.docking_phase == "STOP_NEAR":
 
             cmd = Twist()
-            self.cmd_pub.publish(cmd)  # detener completamente
+            self.cmd_pub.publish(cmd)  # stop completely
 
-            # esperar que la distancia sea estable
+            # wait until distance is stable
             if abs(avg_dist - self.final_approach_distance) < 0.015:
                 self.stop_counter += 1
             else:
@@ -320,18 +320,18 @@ class LimoAtWorkNode(Node):
             if self.stop_counter >= self.stop_required:
                 self.docking_phase = "ALIGN"
                 self.align_ok_counter = 0
-                self.get_logger().info("➡️ Comenzando alineamiento fino")
+                self.get_logger().info("➡️ Starting fine alignment")
 
             return
 
         # =========================
-        # FASE 2: ALINEACIÓN
+        # PHASE 2: ALIGNMENT
         # =========================
         if self.docking_phase == "ALIGN":
             wall_angle = self.estimate_wall_angle()
             if wall_angle is None:
                 return
-            # -------- FILTRO LOW PASS --------
+            # -------- LOW PASS FILTER --------
             alpha = 0.7
             self.filtered_angle = alpha * self.filtered_angle + (1 - alpha) * wall_angle
 
@@ -345,7 +345,7 @@ class LimoAtWorkNode(Node):
             if abs(error) < self.angle_tol:
                 angular_cmd = 0.0
 
-            # -------- SATURACIÓN --------
+            # -------- SATURATION --------
             max_ang_speed = 0.2
             angular_cmd = max(min(angular_cmd, max_ang_speed), -max_ang_speed)
 
@@ -354,27 +354,27 @@ class LimoAtWorkNode(Node):
             cmd.angular.z = angular_cmd
             self.cmd_pub.publish(cmd)
 
-            # -------- ESTABILIDAD --------
+            # -------- STABILITY CHECK --------
             if abs(error) < self.angle_tol:
                 self.align_ok_counter += 1
             else:
                 self.align_ok_counter = 0
 
             if self.align_ok_counter >= self.align_ok_required:
-                self.get_logger().info("🛑 Alineación suficiente alcanzada")
+                self.get_logger().info("🛑 Sufficient alignment reached")
 
-                # Detener giro
+                # Stop rotation
                 stop_cmd = Twist()
                 self.cmd_pub.publish(stop_cmd)
 
-                # Pasar a fase lateral
+                # Transition to lateral phase
                 self.docking_phase = "LATERAL_APPROACH"
                 self.lateral_ok_counter = 0
 
                 return
 
         # =========================
-        # FASE 3: MOVIMIENTO LATERAL
+        # PHASE 3: LATERAL MOVEMENT
         # =========================
         if self.docking_phase == "LATERAL_APPROACH":
 
@@ -389,10 +389,10 @@ class LimoAtWorkNode(Node):
 
             if side_dist > self.lateral_target_distance:
 
-                # velocidad proporcional suave
+                # proportional soft speed
                 lateral_speed = max(0.02, min(self.max_lateral_speed, 0.8 * error))
 
-                cmd.linear.y = lateral_speed  # cambiar signo si está invertido
+                cmd.linear.y = lateral_speed  # flip sign if direction is inverted
                 self.cmd_pub.publish(cmd)
 
                 self.lateral_ok_counter = 0
@@ -404,7 +404,7 @@ class LimoAtWorkNode(Node):
                 self.cmd_pub.publish(stop_cmd)
 
                 if self.lateral_ok_counter >= self.lateral_ok_required:
-                    self.get_logger().info("🛑 Aproximación lateral completada")
+                    self.get_logger().info("🛑 Lateral approach complete")
 
                     self.stop_docking()
                     self.docking_phase = "DONE"
@@ -460,13 +460,13 @@ def read_bag(bag_path, topic_filter):
         count = 0
         for conn, timestamp, rawdata in reader.messages():
             if conn.topic == topic_filter:
-                # ✅ make mutable and modify 5th byte
+                # make mutable and modify 5th byte
                 mutable_raw = bytearray(rawdata)
                 if len(mutable_raw) > 4:
                     mutable_raw[4] = 0x00
                 rawdata_modified = bytes(mutable_raw)
 
-                # ✅ now clean
+                # clean byte sequences
                 rawdata_modified = rawdata_modified.replace(b'\x000', b'\x60')
                 rawdata_modified = rawdata_modified.replace(b'\x001', b'\x61')
                 rawdata_modified = rawdata_modified.replace(b'\x002', b'\x62')
@@ -479,10 +479,6 @@ def read_bag(bag_path, topic_filter):
                 rawdata_modified = rawdata_modified.replace(b'\x009', b'\x69')
                 cleaned_bytes = rawdata_modified.replace(b'\x00', b'')
                 tokens = decode_mixed_bytes(cleaned_bytes)
-                # print("..................")
-                # print(rawdata_modified)
-                # print("..................")
-                # print(cleaned_bytes)
 
                 objects = []
                 targets = []
@@ -577,24 +573,24 @@ def create_pose(x, y, z, ox, oy, oz, ow):
     return pose
 
 pose_dict = {
-    "WS01": create_pose(2.15, -0.35, 0.0, 0.0, 0.0, -0.66, 0.75), # orientation solved listassa
-    "WS02": create_pose(1.85, 1.20, 0.0, 0.0, 0.0, 0.30, 0.95), # orientation solved listassa 
-    "WS03": create_pose(4.0, -0.80, 0.0, 0.0, 0.0, 0.0, 0.99), # orientation solved Listassa
-    "WS04": create_pose(5.35, -0.70, 0.0, 0.0, 0.0, -0.99, 0.0), # orientation solved listassa
-    "WS05": create_pose(5.15, 2.05, 0.0, 0.0, 0.0, -0.99, 0.0), # orientation solved listassa
-    "WS06": create_pose(3.80, 1.85, 0.0, 0.0, 0.0, 0.0, 0.99), # orientation solved listassa
-    "WS07": create_pose(2.50, 1.60, 0.0, 0.0, 0.0, -0.91, 0.39),  # orientation solved listassa 
-    "WS08": create_pose(2.70, 4.1, 0.0, 0.0, 0.0, 0.68, 0.72), # orientation solved
-    "WS09": create_pose(2.80, 4.75, 0.0, 0.0, 0.0, -0.66, 0.75), # orientation solved
-    "WS10": create_pose(4.0, 3.75, 0.0, 0.0, 0.0, 0.68, 0.72), # orientation solved
-    "WS11": create_pose(4.0, 4.75, 0.0, 0.0, 0.0, -0.66, 0.75), # orientation solved
-    "WS12": create_pose(5.4, 8.0, 0.0, 0.0, 0.0, 0.30, 0.95), # orientation solved
-    "WS13": create_pose(3.65, 6.3, 0.0, 0.0, 0.0, 0.68, 0.72), # orientation solved
-    "WS14": create_pose(0.65, 6.0, 0.0, 0.0, 0.0, -0.99, 0.0), # orientation solved Listassa
-    "RT01": create_pose(1.25, 3.5, 0.0, 0.0, 0.0, -0.99, 0.0), # orientation solved
-    "SH01": create_pose(0.5, 1.6, 0.0, 0.0, 0.0, -0.66, 0.75), # orientation solved
-    "SH02": create_pose(3.0, 6.1, 0.0, 0.0, 0.0, 0.94, 0.32), # orientation solved
-    "PP01": create_pose(0.65, 4.65, 0.0, 0.0, 0.0, -0.99, 0.0), # orientation solved
+    "WS01": create_pose(2.15, -0.35, 0.0, 0.0, 0.0, -0.66, 0.75),
+    "WS02": create_pose(1.85, 1.20, 0.0, 0.0, 0.0, 0.30, 0.95),
+    "WS03": create_pose(4.0, -0.80, 0.0, 0.0, 0.0, 0.0, 0.99),
+    "WS04": create_pose(5.35, -0.70, 0.0, 0.0, 0.0, -0.99, 0.0),
+    "WS05": create_pose(5.15, 2.05, 0.0, 0.0, 0.0, -0.99, 0.0),
+    "WS06": create_pose(3.80, 1.85, 0.0, 0.0, 0.0, 0.0, 0.99),
+    "WS07": create_pose(2.50, 1.60, 0.0, 0.0, 0.0, -0.91, 0.39),
+    "WS08": create_pose(2.70, 4.1, 0.0, 0.0, 0.0, 0.68, 0.72),
+    "WS09": create_pose(2.80, 4.75, 0.0, 0.0, 0.0, -0.66, 0.75),
+    "WS10": create_pose(4.0, 3.75, 0.0, 0.0, 0.0, 0.68, 0.72),
+    "WS11": create_pose(4.0, 4.75, 0.0, 0.0, 0.0, -0.66, 0.75),
+    "WS12": create_pose(5.4, 8.0, 0.0, 0.0, 0.0, 0.30, 0.95),
+    "WS13": create_pose(3.65, 6.3, 0.0, 0.0, 0.0, 0.68, 0.72),
+    "WS14": create_pose(0.65, 6.0, 0.0, 0.0, 0.0, -0.99, 0.0),
+    "RT01": create_pose(1.25, 3.5, 0.0, 0.0, 0.0, -0.99, 0.0),
+    "SH01": create_pose(0.5, 1.6, 0.0, 0.0, 0.0, -0.66, 0.75),
+    "SH02": create_pose(3.0, 6.1, 0.0, 0.0, 0.0, 0.94, 0.32),
+    "PP01": create_pose(0.65, 4.65, 0.0, 0.0, 0.0, -0.99, 0.0),
 }
 
 
@@ -603,14 +599,14 @@ def main(args=None):
     node = LimoAtWorkNode()
 
     try:
-        # 1. Publicar pose inicial
+        # 1. Publish initial pose
         node.publish_initialpose()
-        node.get_logger().info("📍 Pose inicial publicada")
+        node.get_logger().info("📍 Initial pose published")
 
-        # 2. Esperar un poco para que AMCL/Nav2 la tome
+        # 2. Wait for AMCL/Nav2 to process the initial pose
         time.sleep(4.0)
 
-        # 3. Definir objetivo
+        # 3. Define navigation goal
         orientation = Quaternion()
         orientation.x = 0.0
         orientation.y = 0.0
@@ -621,14 +617,14 @@ def main(args=None):
         y = 2.205600136766851    
         z = 0.0
 
-        node.get_logger().info(f"🎯 Enviando goal a x={x}, y={y}")
+        node.get_logger().info(f"🎯 Sending goal to x={x}, y={y}")
         node.send_goal(x, y, z, orientation)
 
-        # 6. Mantener el nodo activo para recibir feedback/resultados
+        # 4. Keep node alive to receive feedback and results
         rclpy.spin(node)
 
     except KeyboardInterrupt:
-        node.get_logger().info("🛑 Nodo detenido por el usuario")
+        node.get_logger().info("🛑 Node stopped by user")
 
     finally:
         node.destroy_node()

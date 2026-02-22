@@ -1,0 +1,432 @@
+RoboCup@Work
+Rulebook
+
+Caleb Fook
+Marco Masannek
+Asad Norouzi
+Wiebke Outzen
+Lucas Reinhart
+Christoph Steup
+
+Version: 2024
+March 22, 2024
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+2
+
+Acknowledgments
+
+We would like to thank to previous @Work members that supported the league and advanced the
+rulebook over years:
+• Jan Carstensen
+• Frederik Hegger
+• Nico Hochgeschwender
+• Daniel Kaczor
+• Robin Kammel
+• Alexander Moriaty
+• Walter Nowak
+• Benjamin Schnieders
+• Armin Shahsavari
+• Jon Martin
+• Asadollah Norouzi
+• Sebastian Zug
+• Deebul Nair
+• Maximilian Hachen
+• Kenny Voo
+• Martin Sereinig
+• Leander Bartsch
+Furthermore we would like to acknowledge the following people for contributing to the development
+of the RoboCup@Work league:
+
+• Gerhard Kraetzschmar
+• Rainer Bischoff
+• Daniel Kazcor
+• Arne Hitzmann
+• Frederik Hegger
+• Herman Bruyninckx
+• Sven Schneider
+• Jakob Berghofer
+
+In July 2019 our league lost one of the initiators and founding members. Prof. Dr. Gerhard
+Kraetzschmar has been very active in many functions within the RoboCup-Community for decades.
+We are grateful for his efforts, advises and motivation and will respect his memory.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+3
+
+How to cite the rulebook or RoboCup@Work in general
+If you refer to the this rulebook in particular, please cite:
+@misc{rulebook_2024,
+author = {Caleb Fook, Marco Masannek, Asad Norouzi, Wiebke Outzen, Lucas Reinhart,
+Martin Sereinig, Christoph Steup},
+title = {RoboCup@Work 2024 - Rulebook},
+year
+= 2024,
+howpublished = {\url{https://atwork.robocup.org/rules/}},
+}
+For the citation of the RoboCup@Work please use:
+@InCollection{Kraetzschmar2014,
+Title = {RoboCup@Work: Competing for the Factory of the Future},
+Author = {Kraetzschmar, Gerhard K. and Hochgeschwender, Nico and Nowak, Walter
+and Hegger, Frederik and Schneider, Sven and Dwiputra, Rhama and Berghofer, Jakob
+and Bischoff, Rainer},
+Booktitle = {RoboCup 2014: Robot World Cup XVIII},
+Publisher = {Springer International Publishing},
+Year = {2015},
+Editor = {Bianchi, Reinaldo A. C. and Akin, H. Levent and
+Ramamoorthy, Subramanian and Sugiura, Komei},
+Pages = {171-182},
+Series = {Lecture Notes in Computer Science},
+Volume = {8992}
+}
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Contents
+
+5
+
+Contents
+1 Summary of Changes
+1.1 Season 2024 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.1.1 Open Source Award . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.1.2 Clarifications . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.1.3 Teamleader Meetings . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.1.4 April Tagged Object - Details . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2 Season 2023 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2.1 Restructuring of Benchmark Tests . . . . . . . . . . . . . . . . . . . . . . .
+1.2.2 Linear Increase of Complexity . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2.3 Replacement of the RoCKIn Object Set with the new Advanced Set . . . . .
+1.2.4 Introduction of April Tagged Objects . . . . . . . . . . . . . . . . . . . . . .
+1.2.5 Clarifications for successful manipulation . . . . . . . . . . . . . . . . . . . .
+1.2.6 Referee Briefing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2.7 Minimum Ref Number . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2.8 Technical Challenges . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3 Season 2022 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.1 General Changes for 2022 . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.2 Chapter 2: League Organization . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.3 Chapter 3: Robot Rules . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.4 Chapter 3: Environment Specification . . . . . . . . . . . . . . . . . . . . .
+1.3.5 Chapter 4: The Competition . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.6 Chapter 5: Test Definition . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.7 Chapter 6: Scoring Adjustments . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.8 Chapter 7: Virtual Cups . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.9 Chapter 8: Technical Challenges . . . . . . . . . . . . . . . . . . . . . . . .
+
+9
+9
+9
+9
+9
+10
+10
+10
+10
+10
+10
+11
+11
+11
+11
+11
+11
+12
+12
+12
+12
+12
+12
+13
+13
+
+2 Introduction
+2.1 RoboCup@Work in a Nutshell . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2 Organization of the League . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2.1 League Committees . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2.2 League Infrastructure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3 Participation in the Competition . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3.1 Steps to Participate . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3.2 Qualification . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3.3 Team Description Paper . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3.4 Promotional Video . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3.5 Contribution to On-Site Events . . . . . . . . . . . . . . . . . . . . . . . . .
+
+15
+15
+16
+16
+17
+19
+19
+19
+20
+21
+21
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+3 General Rules
+3.1 Robots . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.1.1 Design and Constraints . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.1.2 Example Robots . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.1.3 Behavior and Safety . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2 Arena Environment . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.1 Floor . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.2 Walls and Virtual Walls . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.3 Obstacles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.4 Tapes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.5 Tables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.6 Shelves . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.7 Rotating Tables . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.8 Precision Placement Tables . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.2.9 Arena Layout . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.3 Service Areas . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.3.1 General . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.3.2 Arbitrary Surfaces and Decoys . . . . . . . . . . . . . . . . . . . . . . . . .
+3.3.3 Containers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.4 Objects . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.4.1 Basic Object Set . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.4.2 Advanced Object Set . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.4.3 April Tagged Object Set . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3.4.4 Manipulation Zone . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+23
+23
+23
+24
+25
+26
+26
+26
+27
+28
+28
+30
+30
+31
+32
+35
+35
+35
+37
+37
+38
+39
+41
+43
+
+4 Competition
+4.1 Teams and Roles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.2 Meetings and Language of Communication . . . . . . . . . . . . . . . . . . . . . . .
+4.3 Code of Conduct and Disqualification . . . . . . . . . . . . . . . . . . . . . . . . .
+4.4 Competition Procedure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.5 Time Schedule . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.6 Practice Slots . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.7 Teamleader Meetings . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.8 Qualification for a Test . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.9 Parc fermé . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.10 Test Procedure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.11 Restarting a Run . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.12 Skipping Tests . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.13 Atwork Commander (AC) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4.13.1 On Site . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+45
+45
+46
+46
+46
+46
+47
+47
+48
+48
+48
+50
+50
+51
+51
+
+5 Tests
+5.1 General . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.1.1 Common Rules . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.1.2 Grasping Objects . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+53
+53
+53
+53
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+5.1.3 Placing Objects . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+New Test Structure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Basic Manipulation Test . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Basic Transportation Test . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Advanced Transportation Test . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Final . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Test Specification Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+54
+57
+57
+57
+58
+59
+60
+
+6 Scoring and Ranking
+6.1 Scoring . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6.2 Time Bonus . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6.3 Simplifications . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6.3.1 Using April Tag Tagged Cubes as Objects . . . . . . . . . . . . . . . . . . .
+6.4 Penalties . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6.5 Collisions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6.6 Restarts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6.7 Ranking . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+63
+63
+63
+63
+64
+64
+64
+66
+66
+
+7 Challenges and Awards
+7.1 Technical Challenges . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+7.1.1 Master Communication Test . . . . . . . . . . . . . . . . . . . . . . . . . .
+7.1.2 Coworker Assembly Test . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+7.2 Open Source Award . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+69
+69
+70
+70
+70
+
+8 Virtual RoboCup
+8.1 General . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.2 Arena Setup . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.3 Files required from Teams . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.4 Qualification for the competitions . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.5 Camera Setup . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.6 Task Generation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.7 Competition Test Procedure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.7.1 Preparation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.7.2 Test Start . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.7.3 Test Run . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.7.4 Test End . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.8 Scoring . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8.9 Technical Challenges . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+73
+73
+73
+75
+75
+75
+76
+76
+76
+77
+77
+77
+77
+78
+
+9 Appendix
+9.1 Link list . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+79
+79
+
+Index
+
+79
+
+5.2
+5.3
+5.4
+5.5
+5.6
+5.7
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 1. Summary of Changes
+
+9
+
+Chapter 1
+
+Summary of Changes
+1.1 Season 2024
+For the Season 2024, we mainly added some clarifications regarding onsite events and the usage of
+ATTCs.
+
+1.1.1 Open Source Award
+We added an open source award which should encourage share of code and knowledge between teams
+with the intention to improve the league community and simplify the initial steps to participate (see
+7.2).
+
+1.1.2 Clarifications
+We added some clarifications regarding:
+• Arbitrary Surfaces and objects sinking into them
+• Default table size and allowed margin for onsite constructions
+• Placing multiple objects into the same container
+• The maximum size for decoy objects to avoid damage on manipulators
+
+1.1.3 Teamleader Meetings
+We added timeslots for teamleader meetings to the official onsite schedule. They have always been
+part of onsite events but were a bit difficult to organize without official requirements with the recently
+increasing number of participating teams.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+10
+
+1.2 Season 2023
+
+1.1.4 April Tagged Object - Details
+We’ve added some detailed requirements for the usage of April Tagged Objects, mainly targeting
+better usability and handling for onsite events. We also removed some bonus points for manipulation
+of ATTCs as we felt that they were unjustified considering the much lower technical hurdle.
+To ensure that we can actually replace a regular task with the simplified ATT version, teams wanting
+to use that option are required to provide two complete sets of prepared objects for onsite events.
+
+1.2 Season 2023
+1.2.1 Restructuring of Benchmark Tests
+The specialized tasks Precise Placement and Rotating Table have been integrated into the new
+Advanced Transportation Tasks and the Final. The standalone tests have therefore been removed
+from the competition schedule, effectively reducing the number of total tests by one.
+
+1.2.2 Linear Increase of Complexity
+The elements included in the different tests have been adjusted to form a more linear increase of
+overall task complexity over the course of the competition. This should allow teams to participate
+in the tests more successful for longer while still setting benchmarks in the advanced tests.
+
+1.2.3 Replacement of the RoCKIn Object Set with the new Advanced Set
+The objects from previous years technical challenge ”Real Object Test” have been added to the new
+Advanced Object set. This replaces the outdated RoCKIn object set for this season and onwards.
+
+1.2.4 Introduction of April Tagged Objects
+With increasing requirements for object recognition due to the introduction of arbitrary surfaces
+and more difficult objects, the object detection is very critical for teams to being able to perform
+tasks in the league. To relax the initial boundary of this task, an option to replace the real objects
+with April tagged cubes has been introduced. Teams can then focus on other aspects of the league
+(navigation, task optimization, etc.) while being able to participate in the league successfully. As
+the final benchmark still foresees actual detection and recognition of real objects, a penalty is applied
+when a team uses this simplification.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+

@@ -1,0 +1,877 @@
+Chapter 3. General Rules
+
+23
+
+Chapter 3
+
+General Rules
+In this chapter the general rules will be explained that are valid for all tests. This chapter is seperated
+into the sections robot, arena environment, Service Areas and Objects.
+
+3.1 Robots
+The robots used for competition shall satisfy professional quality standards. The concrete definition
+of these standards is to be assessed by the TC, comprising aspects such as sturdy construction,
+general safety, and robust operation. It is not required that the robots are certified for industrial use
+to allow for a faster and easier implementation of research work. However, some requirements have
+to be met to ensure the safety of all participants of the competition. If there are even vague doubts
+about the eligibility of using particular designs, parts, or mechanisms, the team should consult the
+TC well in advance.
+
+3.1.1 Design and Constraints
+Perks The following assumptions are made about the kind of robots used in the competition:
+• At least one of the robots used by a team is mobile and moves on wheels. No specific
+assumptions are made about the kinematic design, but the mobile robots should be able
+to move on basically flat, sufficiently firm surfaces. Aerial robots are not allowed in this
+competition.
+• Robots are equipped at least one manipulator and are able to handle the Objects defined in
+Table 3.1, Table 3.2 and Table 3.3.
+• The manipulator of the robot should be designed and mounted on the robot such that it can
+handle the Objects at different heights, usually between 0cm and 40cm above the floor.
+• The robots use sensors to obtain information about their whereabouts in the environment
+and the task-relevant Objects. Usual types of sensors used are 2D-LiDARs, (3D-) Cameras,
+RaDAR, Ultrasonic range finders and other. Sensors must not harm humans due to their
+physical properties (e.g. no laser class 2 or above).
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+24
+
+3.1 Robots
+
+Size There are no constraints regarding the size and weight of the used robots, but they have to
+fit in the arena defined in section 3.2. The minimum passage width is 80cm. The used robots must
+be able to maneuver in that space.
+Electrical The used batteries may not exceed a capacity of 500Wh. 300Wh of capacity is recommended. The maximum voltage allowed on the robotic system is 60 V DC.
+Movement The maximum speed of the robots may not exceed 1.5 m/s. The robot should also be
+able to stop within a reasonable distance on concrete floor.
+Actuator Types Electric, pneumatic, and hydraulic actuation mechanisms are permitted, provided
+that they are constructed and produced according to professional standards and meet safety constraints. Combustion engines and any kind of explosives are strictly forbidden. Robots may not
+pollute or harm their environment in any way, e.g. by loss of chemicals or oil, spilling liquids, or
+exhausting gases.
+Connectivity The TC may require that robots are equipped with a wireless communication device
+of some sort (e.g. 802.11n), in order to communicate task specifications to the robots.
+
+3.1.2 Example Robots
+Figure 3.1 shows three examples how a robot suitable to the competition can look like.
+
+Figure 3.1: Examples mobile robot platforms that can be used for RoboCup@Work. Robots from the teams
+AutonOHM (Nuremberg-Germany), Tyrolics (Innsbruck-Austria) and robOTTO (MagdeburgGermany) – from left to right.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+25
+
+3.1.3 Behavior and Safety
+For safety the robots have to meet the constraints in section 3.1.1. In general, all robots shall be
+operated with maximum safety in mind. Any robot operation must be such that a robot neither
+harms humans nor damages the environment. The used batteries shall be handled with care and all
+team members must be educated in the correct usage, charging and storage of the batteries of the
+team. For lithium batteries appropriate storage bags must be used by the teams. The OC supplies a
+fire extinguisher for lithium batteries at the competition. If this is not sufficient for the used batteries
+of a team. The team is responsible for supplying an appropriate fire extinguisher by themselfs. The
+OC and TC control the observance of this rules.
+All robots must have an emergency stop button. The emergency stop has to be a hard stop mechanism, that ensures that the energy transfer to all actuators is stopped immediately and the robot
+halts. The mechanism must be a red emergency stop button that is clearly visible, easily accessible
+and per wire attached to the robot. It has to be easy accessible from at least 3 sides of the robot.
+A wireless emergency stop button is optional but not sufficient.
+The OC may request the proof of a robot’s safety (e.g. the correct operation of an emergency stop)
+anytime during the competition and exclude teams that cannot satisfy safety requirements.
+When participating in a competition, the team may operate the robot only in their own team area,
+in the arenas provided (possibly constrained by a schedule assigning periods of time for exclusive use
+of the arena by a team or a group of teams), and in any other areas designated by the organizers for
+robot operation. Any operation of robots outside of these areas, e.g. in public areas or emergency
+paths, require prior permission by the OC.
+Safety test procedure:
+Before the competition starts each robot has to perform a safety test procedure. This will be included
+in the competition schedule given by the OC.
+• Inspection of the robot platform (sharp edges and general construction)
+• Description of the included safety systems by the team leader
+• Test of emergency stop while standing still
+• Test of emergency stop during navigation
+• Test of emergency stop during manipulation
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+26
+
+3.2 Arena Environment
+
+3.2 Arena Environment
+The competition is held in an arena resembling an example layout of industrial manufacturing facilities. In this Section different parts of the environment are explained.
+
+3.2.1 Floor
+The floor is made of some firm material. This includes among others floors made of concrete, screed,
+timber, plywood, chipboard, laminated boards, linoleum, PVC flooring, or carpet. Some examples
+are illustrated in Figure 3.2. Floors may neither be made of loose material of any kind (gravel, sand,
+or any material which may damage the functioning of the robot’s wheels) nor may such material be
+used on top of the floor. Liquids of any kind are not allowed. The floor may have spots of unevenness
+of up to 1cm in any direction (clefts, rifts, ridges, etc.).
+
+Figure 3.2: Examples of floors that can be used for RoboCup@Work arenas.
+
+3.2.2 Walls and Virtual Walls
+The arena consists of outer and inner Walls used to build structures, create obstacles or function as
+protection barriers for teams and viewers. Walls may be either physical (plank) or virtual (red/white
+Tape). All walls (physical and virtual) have an infinitely height. The arena is completely enclosed
+by Walls (both types possible), meaning robots are not allowed to exit the arena during a run. All
+types of Walls won’t be changed during the competition. If the robot touches a Wall or Virtual Wall
+it results in a Major Collision.
+The height of a physical Wall must be not less than 20cm and not more than 40cm (but will be
+seen as infinite high). Most Walls have a uniform main color (white), but may be enforced by metal
+(aluminum framework) and decorated with sponsor logos or ads.
+Virtual Walls are made of red/white Tape and may never be crossed during a run. The arena can
+contain Walls and Virtual Walls inside.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+27
+
+Figure 3.3: Example of a typical arena. The red/white Tape indicates a Virtual Wall. The yellow/black Tape
+indicates a Virtual Obstacle and the white ashlar-formed cartonages are Obstacles.
+
+3.2.3 Obstacles
+In addition to the static arena elements, semi-dynamic Obstacles may be placed inside the arena
+before a competition run begins. The position of such Obstacles is decided by the TC during the
+setup phase of the run and randomized between different run types. Obstacles can be either physical
+or virtual.
+Obstacles may block paths partly or completely, as long as all active Service Areas are still reachable.
+There are three main Obstacle placement types:
+• Blocking: A narrow section is completely blocked by the Obstacle, which means that no robot
+can physically pass it (< 20cm).
+• Semi-Blocking: The Obstacle reduces the distance between arena elements below the minimum width for a path (< 80cm). The path therefore counts as blocked, meaning that there
+must exist another valid path to all active Service Areas. Robots are still allowed to use all
+paths if they fit through the smaller gaps. The gap width is fixed and its value is calculated
+using the width of the biggest robot in the competition plus 10cm. This usually adds up to
+around 60cm, but might be higher or lower, depending on the participating robots.
+• Non-Blocking: The Obstacle adds or enlarges an arena element but keeps all paths intact.
+Physical Obstacles (see figure 3.3) measure atleast 2cm x 2cm x 20cm (l x w x h) and may be made
+of any non-transparent, firm material (wood, metal). Some examples are bins, shipping boxes and
+Wall elements. Their color is not specified. All physical Obstacles are treated like any other arena
+element during a run, including the rules for collisions (Major Collision).
+Virtual Obstacles are marked using the yellow/black Tape from section 3.2.4. The collisions with
+these Virtual Obstacles will treated as Tape Collision (see 6.4).
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+28
+
+3.2 Arena Environment
+
+3.2.4 Tapes
+Red/white Tape:
+The red/white Tape (Tesa signal 5cm width) is considered as a Virtual Wall and has an infinite
+height. The red/white Tape is static and won’t be changed during the whole competition. It will be
+used inside the arena and as an outer border of the arena. Touching the red/white Tape is considered
+as a Major Collision.
+Yellow/black Tape:
+The yellow/black Tape (Tesa signal 5cm width) is considered as a Virtual Obstacles and has an
+infinite height. The yellow/black Tape will be placed by the TC before a run that contains Virtual
+Obstacles. Touching the yellow/black Tape is considered as a Tape Collision.
+
+Figure 3.4: Example red/white and yellow/black Tapes
+
+Markup Tape:
+Green electrical tape is considered as markup Tape. This tape can be used everywhere, where it is
+useful. It is intended as a marker for the referees and teams and not for the robot. Therefore the
+color may deviate, but the color is not red or yellow to guarantee a clear difference to the other
+tapes. The tape is used to mark the START and FINISH area. Furthermore the tape can be used
+to mark the position of tables (especially 0cm) and Walls. The latter ones are useful for restoring
+the arena in case of a Major Collision.
+
+3.2.5 Tables
+Tables in the league typically measure 80cm wide (the side the robot approaches) and 50cm deep.
+These are the intended dimensions, but a margin of +/- 10cm is allowed to accommodate potential
+construction variations. In general terms, the table shall be big enough to contain at least one
+manipulation zone as described in section 3.4.4. In general two manipulation zones are included on
+one table (one zone on each side of the Table). The used table heights are 0cm, 5cm, 10cm and
+15cm. See further down in this section for more information about the 0cm-Table. See figure 3.5
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+29
+
+for illustration. The tolerance for the heigth is ±2cm. During a competition the Table size is only
+fixed in the margin of ±2cm, because of arbitrary surfaces (see 3.3.2 for an explanation of arbitrary
+surfaces). The table is closed between the bottom and the table top. That’s why the Table can be
+used as a reference for navigation, when the height is sufficient for the robot. Note that the height
+may change slightly with arbitrary surfaces during a competition and thus the table can sometimes
+be visible to the laser scanners and sometimes not.
+
+Figure 3.5: left: 0cm-Table with arbitrary surface (approx. 1cm thick); right: PPT-Table which is a standard
+10cm-Table with cavities
+
+If a table has a height of 0cm, a green electrical Tape (see 3.2.4) will mark the area. A 0cm-Table
+can be active or inactive. Active means, that the current test (see table 5.4) includes 0cm-Tables. If
+the table is active, the surrounded area may be covered by a white sheet of paper or arbitrary surface.
+The material is not fixed. The OC is responsible to replace it in case of pollution or tears. To reduce
+the tear, it is removed when the 0cm-Table is not active. If the floor is white or the table shall
+have an Arbitrary Surface, no cover needs to be installed. 0cm-Table may be crossed and does not
+count as a collision. If the laid out white Surface is moved, it is not a collision. If the robot touches
+an Object while navigating, this will be handled as a Minor Collision. Examples for 0cm-Table are
+shown in figure 3.6.
+
+Figure 3.6: left: 0cm-Table which is considered as inactive or as an active table with arbitrary surface; right:
+0cm-Table which is considered as active with an arbitrary surface
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+30
+
+3.2 Arena Environment
+
+3.2.6 Shelves
+The integration of Shelves into tests is according the table 5.4. Service Areas may foresee the use
+of shelves and shelf units as depicted in Figure 3.7. The lower part of the Shelf is a 10cm-Table
+as specified in 3.2.5. The maximum height of the shelves should be not more than 40cm. In the
+example shown in Figure 3.7 the first 15cm ± 2cm are not covered by the top shelf. The length
+of free space can be changed during competition and can not be seen as mandatory. Therefore all
+teams has to consider special picking behavior to avoid collision.
+The top shelf surface may be specially designed in order to serve specific purposes, e.g. holding
+Objects. Objects for grasping are always placed on the bottom shelf. The placement of a delivered
+Object has to be done on the top shelf.
+
+0 - 150
+
+(a) A shelf with two levels and uniform col-
+
+(b) Technical draw of shelf configuration.
+
+ored surfaces.
+
+Figure 3.7: Exemplary shelf and generic technical drawing.
+
+3.2.7 Rotating Tables
+The integration of Rotating Tables into tests is according the table 5.4. A Rotating Table as depicted
+in Figure 3.8 is used for these tests. The Objects placement is the same like in section 3.4.4, so the
+maximal depth for Objects is 20cm and there is gap of 2cm to the border of the Rotating Table.
+The height of the Rotating Table should be not lesser than 8cm and not be more than 12cm. The
+diameter of the Rotating Table should be not lesser than 50cm and not more than 100cm. The
+Rotating Table has to have a white surface colour. The rotating speed of the table depends on the
+diameter so that the Objects speed is able to vary between 5cm s−1 ≤ vobject ≤ 20cm s−1 . This has
+to be adjusted by the referees before a team starts its run to a fixed value (some small variations in
+boarders of technical feasibility are allowed). This is changed after each run type to another random
+chosen value in this range. During the run of a team the speed is static and each team will have the
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+31
+
+same table speed. Example: For a Rotating Table with diameter dtable = 1m, Objects are placed
+2·vobjects
+−1 and
+= 2·0.2
+on a grasp region with the diameter dobject = 0.8m with ωtable = dgrasp
+0.8 = 0.5rad s
+0.5
+table
+with ntable = ω2·π
+= 2·π
+the minimum rotational speed of the Rotating Table ntable = 0.0796s−1
+(rounds per second) can be calculated.
+dobject
+
+htable
+
+dtable
+
+(a) A Rotationg table with some Objects.
+
+Manipulation
+Zone
+
+(b) Technical draw of Rotating table.
+
+Figure 3.8: Exemplary Rotating table and generic technical drawing.
+
+3.2.8 Precision Placement Tables
+The precision placement table as shown in Figure 3.10 includes object-specific cavities tiles as shown
+in the Figure 3.9. It is based on a standard 10cm table described in Section 3.2.5. For each object
+used in the test, there will be one specific cavity. The cavity has the dimension of the object plus
+a 2mm offset for each dimension. At most five cavities are used in the test. The cavities are in
+an random order on the table and are located within the standard manipulation zone defined in
+Figure 3.22. One cavity tile has the dimensions of 140mm × 140mm. Placing five cavities on a
+standard 10cm table leaves a boarder of 5cm on each side of the table. The additional decoy cavity
+tiles will be chosen by the referees. For the Precision Placement Table only the RoboCup@Work
+Object Set will be used.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+32
+
+3.2 Arena Environment
+
+(a) F20 20
+
+(b) S40 40
+
+(c) M20 100
+
+(d) M20
+
+(e) M30
+
+(f) R20
+
+(g) F20 20
+
+(h) S40 40
+
+(i) M20 100
+
+(j) M20
+
+(k) M30
+
+(l) R20
+
+Figure 3.9: Illustration of horizontal (top row) and vertical (bottom row) cavities for the different kind of
+manipulation objects.
+
+500mm
+
+800mm
+
+140mm
+
+50 mm
+
+140 mm
+
+50mm
+
+(a) The PPT platform including five cavity tile.
+
+(b) Technical draw of Precision Placement table.
+
+Figure 3.10: Exemplary Precision Placement table and generic technical drawing.
+
+3.2.9 Arena Layout
+The arena is a static 2D environment consisting of Walls, Tables and Obstacles etc. with a size of
+atleast 10 m2 and not more than 120 m2 . An example layout is shown in fig. 3.11.
+Layouts may include rooms and hallways to create more realistic scenarios. Service Areas (see section
+3.3) mark the locations for robots to perform tasks. Each requested Service Area must be accessible
+via atleast one path of 80cm width.
+Each competition has a new and unique layout designed by the actual TC members. It should feature:
+• Area 10 m2 - 120 m2
+• Minimum distance between arena elements at least 80cm
+• Widespread Service Areas entailing robot movements
+• Multiple paths between Service Areas
+• START and FINISH area
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+Figure 3.11: An exemplary setup of a RoboCup@Work environment.
+
+Figure 3.12: Annotated 2D map of the environment in fig. 3.11
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+33
+
+34
+
+3.2 Arena Environment
+
+START and FINISH area:
+One or two parts of the arena are separated with marking Tape and considered as START and FINISH
+area. The START and FINISH area can be the same or two independent areas. The robot may leave
+the START area and enter the FINISH area only once. The START/FINISH area is leaved/entered
+when the robot completely cross the corresponding Marking Tape. In figure 3.13 an exemplary Tape
+configuration is shown. As soon as the robot enters the FINISH area or re-enters the START area the
+run ends. The FINISH area counts as a Service Area and reaching the FINISH area gives additional
+points.
+START area
+
+FINISH area
+
+Figure 3.13: Exemplary tape configuration: black lines are physical walls, red white dashed lines are virtual
+walls, yellow black dashed lines are barrier tape and green lines are marking tape
+
+Referee Zone
+The arena is enclosed by a padded strip of 1m. This area is reserved for the referees to enable them
+to move freely while judging a robot’s performance. See section 4.1.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+35
+
+3.3 Service Areas
+A Service Area indicates a location for a robot where tasks (e.g. picking or placing Objects) have to
+be performed.
+
+3.3.1 General
+Such a location is usually a Table with a flat white top (see fig. 3.11), commonly referred to as
+Workstation (only in a case of a normal Table), but can also be a Rotating Table, Shelf, Precise
+Placement station or any other type needed for a specific task. In order to successfully reach a Service
+Area, robots must position themselves in front of the Service Area in a way that allows manipulation
+of the Objects of interest and the robot has to stand still. To enable robots to reach such a position,
+a rectangular area with 80cm width must be kept free of Obstacles (see fig. 3.14).
+
+Figure 3.14: Free Space in front of a Service Area
+
+The arena layout must define where the ”front” of a table is. Figure 3.12 gives an example for the
+definition of the position of each Service Area, marking them as WSx (Workstation x), SHx (Shelf x),
+PPx (Precise Placement x)and RTx (Rotating Table x). The orientation only indicates the direction
+of the Service Area. It does not specify the robot’s heading, which may be chosen by teams according
+to their individual robot design.
+Tables that includes Service Areas which can be used from both sides (see fig. 3.11) are defined
+as two seperate workstations (e.g. WS5 & WS6). However, manipulation of theses Service Area
+requires the robot to have its center in the rectangular area defined in fig. 3.14. This means that
+manipulation of the opposite Service Area is NOT allowed (see 3.4.4), even though it would be
+physically possible.
+This rule also applies to the two positions for the Rotating table (RT1 and RT2). This makes smaller
+physical layouts possible that still provide the ability to create complex navigation challenges due to
+the amount of locations to visit.
+
+3.3.2 Arbitrary Surfaces and Decoys
+In order to make the operating environment more realistic, the Service Areas may contain different
+kinds of Arbitrary Surfaces (Figure 3.15) with industrial items as Decoys (Figure 3.16). The Decoys
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+36
+
+3.3 Service Areas
+
+are limited in height to max. 10 cm. The width and depth of decoys are only limited by the size
+of the manipulation area. The Arbitrary Surfaces don’t have to be fixed mounted at the Service
+Areas. Examples of Arbitrary Surfaces can be different wood pattern, grass, alufoil, plexiglas etc.
+The integration of Arbitrary Surfaces and Decoys into tests is according the table 5.4. If a team
+choose AprilTag objects in a test then no arbitrary surfaces will be used.
+
+(a)
+
+(b)
+
+(d)
+
+(c)
+
+(e)
+
+Figure 3.15: Examples of arbitrary surfaces used for Service Areas.
+
+(a)
+
+(b)
+
+Figure 3.16: Examplary configuration of the working desks including objects and decoys.
+
+Placement of Decoys and arbitrary surfaces are done by the referees. Decoys could be any kind of
+object (tools, hardware, small electrical devices) but also standard objects from the rule book defined
+in section 3.4 can be used. Figure 3.16 shows some examples.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+37
+
+3.3.3 Containers
+As in many industrial settings, the RoboCup@Work environment may be equipped with several
+Containers (see Figure 3.17). The Containers are defined as industrial plastic stacking boxes size
+2B, outer dimensions: 135 × 160 × 82mm, usable dimensions: 120 × 125 × 65mm in red ca. RAL
+3020 and blue ca. RAL 5015. They can store any kind of Object defined in Section 3.4. Robots
+are supposed to place previously grasped Objects into containers. (Grasping from containers might
+be included in future competitions.) Several Containers can be present in the environment and are
+always associated with a Service Area. That means that the Container itself will be placed within
+the manipulation zone defined in Section 3.4.4. It is also possible that more than one Container
+is placed at a single Service Area, but not multiple Containers of the same color. The constraints
+defined in Section 3.4.4 apply also to the Containers. Currently, a Container itself does not need to
+be manipulated or transported by the robot. The position of the Containers will be decided by the
+referees before every run type.
+
+(a) blue
+
+(b) red
+
+Figure 3.17: Containers can be used for grasping Objects out or placing Objects into them.
+
+3.4 Objects
+The Objects in RoboCup@Work include a wide range of Objects relevant in industrial applications of
+robotics. They eventually cover any raw material, (semi-)finished parts or products as well as tools
+and possibly operating materials required for manufacturing processes. Object types are selected by
+the TC and shall vary in complexity due to different shapes, colors and uses of objects. Currently
+there are three sets of Objects used in the competition: Basic, Advanced and April Tagged. The
+following sections provide details about those sets. The exact appearance of the object used in the
+competition can slightly vary due to availability, e.g. different coating colors for some standard parts.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+38
+
+3.4 Objects
+
+3.4.1 Basic Object Set
+The Basic Object Set includes standard profile rails, screws and nuts with various sizes and masses.
+ID
+
+Object
+
+Symbolic Description
+
+Mass
+
+Details
+
+1
+
+F20 20 B
+
+49 g
+
+Small aluminium profile
+Coating/Colour: black anodized
+Size: 20 × 20 × 100mm
+
+2
+
+F20 20 G
+
+49 g
+
+Small aluminium profile
+Coating/Colour: gray anodized
+Size: 20 × 20 × 100mm
+
+3
+
+S40 40 B
+
+186 g
+
+Large aluminium profile
+Coating/Colour: black anodized
+Size: 40 × 40 × 100mm
+
+186 g
+
+Large aluminium profile
+Coating/Colour: gray anodized
+Size: 40 × 40 × 100mm
+
+296 g
+
+Screw
+ISO4014, DIN 931, EU 24014
+Coating/Colour: blank, black burnished
+Size: M20 × 100
+
+56 g
+
+Small nut
+ISO4032, DIN934, EU 24032
+Coating/Color: blank, black burnished
+Size: M20
+
+217 g
+
+Large nut
+ISO4032, DIN934, EU 24032
+Coating/Color: blank, black burnished
+Size: M30
+
+4
+
+5
+
+6
+
+7
+
+S40 40 G
+
+M20 100
+
+M20
+
+M30
+
+Table 3.1: RoboCup@Work Basic Object Set
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+39
+
+3.4.2 Advanced Object Set
+For 2023, the RoCKIn object set (see 2022 rulebook or previous ones) is replaced by a selection of
+better available parts for a drive train, as well as some tools (see Section 9.1). The new object set
+was introduced in a technical challenge in 2022 and is called Advanced Object Set.
+ID
+
+20
+
+Object
+
+Symbolic Description
+
+Axis2
+
+Mass
+
+180 g
+
+Details
+Steel axis
+Misumi: SFUB25-25-F28-P17-T15-S10-Q20
+Coating/Colour: blank, black burnished
+Length: 68 mm
+Diameter: 17mm, M20
+Misumi (visited Januar 2022)
+
+21
+
+22
+
+23
+
+24
+
+Bearing2
+
+Housing
+
+Motor2
+
+Spacer
+
+100 g
+
+Bearing
+SKF YAR203-2F
+Coating/Colour: gray
+Useable with housing
+SKF (visited Januar 2022)
+
+60 g
+
+Housing
+SKF P40
+Coating/Colour: gray
+Useable with bearing
+Remark: needs two hex socket screw M8x10 (ISO
+4762, DIN 912) and two M8 nuts (ISO 4032, DIN
+934)
+SKF (visited Januar 2022)
+
+350g
+
+Motor 755
+Coating/Colour: gray
+Size: 66.7 × 42.0mm
+Diameter: daxis = 5mm, laxis = 10mm
+Amazon (visited Januar 2022)
+Flanged Spacer
+Misumi CLJHJ25-30-70
+Coating/Colour: white
+Size: 70mm
+Diameter: dinner = 25mm, douter = 30mm
+Misumi (visited Januar 2022)
+
+Table 3.2: Advanced Object Set - Part 1
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+40
+
+ID
+
+25
+
+26
+
+27
+
+28
+
+3.4 Objects
+
+Object
+
+Symbolic Description
+
+Screwdriver
+
+Wrench
+
+Drill
+
+AllenKey
+
+Mass
+
+Details
+
+19g
+
+WERA 352
+Ball end screwdriver,hexagon socket screws
+Coating/Colour: black/green
+Size: 181mm
+Diameter: dtip = 2.5mm
+Code: 05138070001
+Amazon (visited Januar 2022)
+
+ca. 72g
+
+WERA Jocker 6000, 8mm
+Ratcheting combination wrenches
+Coating/Colour: silver/grey/pink
+Size: ca. 144mm
+Diameter: dmax = 20mm
+Code: 05073268001
+Amazon (visited Januar 2022)
+
+ca. 10g
+
+Bosch Drill HSS-Co DIN338
+Drill
+Coating/Colour: gold/ Cobalt alloy
+Length: ca. 151mm
+Diameter: dmax = 13mm
+Code: 3165140382724
+Amazon (visited Januar 2022)
+
+ca. 10g
+
+Wera Allen Key 8mm,
+3950 PKL L-key, metric, stainless
+Coating/Colour: silver
+Length: ca. 195mm × 37mm
+Diameter: dmax = 8mm
+Code: 05022708001
+Amazon (visited Januar 2022)
+
+Table 3.3: RoboCup@Work Advanced Object Set - Part 2
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+41
+
+3.4.3 April Tagged Object Set
+For the season 2023 and onwards, 3D printed cubes marked with April tags might be used in the
+competition. This should allow teams to focus on other areas than object recognition by simplifying
+the detection of Objects. These cubes will be called April Tag Tagged Cubes (ATTC) in the following.
+The April Tags used in RoboCup@Work measure 40mm × 40mm and have an encoding taken from
+the 36h11 April Tag family, including a 1bit black and 1bit white border as shown in fig. 3.18.
+
+Figure 3.18: Example of an April Tag with the ID 42. Encoding is from the 36h11-April Tag Family.
+
+All the used April Tag ID numbers will fit to the ID numbers used by the AtWork Commander in the
+atwork commander msgs/msg/Object.msg.
+Any software package to identify such april tags is allowed. The April Tag ROS package would be a
+great and easy-to-use example.
+
+3.4.3.1 Dimensions and Details of the ATTCs
+The standard ATTC measures 42mm × 42mm × 42mm and has slightly rounded edges, similar to
+the shape of aluminum profile rails. A 1mm deep cavity measuring 40.5mm × 40.5mm is embedded
+in the top of the cube to make centering the april tag printouts easier. The exact design and size is
+specified in fig. 3.19 and can be downloaded from the official league repository: 3D STL file for an
+ATTC
+The cubes are 3D printed using PLA filament. Any color is allowed since the identification of cubes
+is solely done using the printout tag, which is to be glued into the top cavity. Additionaly, printouts
+of a human-readable object ID and an image of the corresponding object from tables 3.1, 3.2 and
+3.3 must be glued to the side of the cubes to allow for easier onsite handling and identification of
+the cubes.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+42
+
+3.4 Objects
+
+(a) April Tag Tagged Cube (ATTC), including overall dimensions.
+
+(b) Detailed dimensions of the ATTC cavaty
+to fix a certain April Tag.
+
+Figure 3.19: 3D construction of the ATTC as manipulation object.
+
+Figure 3.20: Examples of allowed ATTCs
+
+3.4.3.2 Tagged Targets
+To allow for the more advanced tasks to be performed using the simplified april tag detection method,
+the target objects (precise placement cavities and containers) are also marked with a tag.
+Containers are marked with a tag glued to the inside bottom of the container. The tag shall be
+placed as centered as possible.
+For the precise placement tests, a special PP tile is used which allows a tag to be placed with a
+constant offset from the hole (see fig. 3.21). The used ID matches the ID of the object that must
+be placed into that cavity.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 3. General Rules
+
+43
+
+Figure 3.21: Examples of tagged targets
+
+3.4.4 Manipulation Zone
+The manipulation zone defines the area where Objects can be placed. Thereby, the following constraints need to be satisfied:
+• The maximum depth of the manipulation zone from the front of the service area to the end of
+the manipulation zone is 20cm.
+• The minimum distance between Objects to each other is 2cm.
+• The minimum distance of the beginning of the manipulation zone to a Wall is 10cm.
+• There as an offset of 2cm from the border of the Service Area to the manipulation zone.
+Note, the constraints do not permit, that Objects can be partially occluded dependent on the viewpoint.
+For the placement of Objects the following terms are used:
+• Position: point within 2D coordinate system of a Manipulation Zone,
+• Rotation: rotation around vertical axis of a Manipulation Zone,
+• Orientation: rotation around horizontal axes of a Manipulation Zone, i.e. whether the Object
+is standing upright or lying on its side
+• Pose: combination of position, rotation and orientation.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+44
+
+3.4 Objects
+
+max. 0.2 m
+
+m
+in
+
+min. 0.02 m
+
+.0
+.0
+
+2
+
+m
+
+0.5 m
+
+0.8 m
+
+min. 0.02 m
+
+Service Area
+Manipulation Area
+Wall
+
+min. 0.1 m
+
+Figure 3.22: Manipulation zone: the green color indicates the area where Objects can be placed on a Service
+Area by the referees.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+

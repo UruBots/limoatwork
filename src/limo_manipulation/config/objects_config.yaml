@@ -1,0 +1,99 @@
+# objects_config.yaml
+# RoboCup @Work Basic Object Set — per-object parameters.
+#
+# Dimensions are the REAL physical dimensions (from the rulebook):
+#   F20_20_B / F20_20_G : 20×20×100 mm aluminium profile, anodized
+#   S40_40_B / S40_40_G : 40×40×100 mm aluminium profile, anodized
+#   M20_100             : M20×100 mm bolt, black burnished
+#   M20 (nut)           : M20 hex nut, 30 mm AF × 16 mm height
+#   M30 (nut)           : M30 hex nut, 46 mm AF × 18 mm height
+#   ATTC Cube           : 42×42×42 mm white cube with AprilTag
+
+objects:
+
+  f20_20:
+    label: "F20_20 Aluminium Profile"
+    dimensions: [0.020, 0.020, 0.100]     # x, y, z (metres)
+    half_height: 0.050                    # z/2 — used to compute grasp z
+    mass: 0.049                           # kg
+    # Color range for HSV detection (real robot, OpenCV)
+    # Black anodized aluminium
+    color_hsv_low:  [0,   0,   0]        # H, S, V lower bound
+    color_hsv_high: [180, 80,  80]       # H, S, V upper bound
+    color_name: "black_anodized"
+
+  s40_40:
+    label: "S40_40 Aluminium Profile"
+    dimensions: [0.040, 0.040, 0.100]
+    half_height: 0.050
+    mass: 0.186
+    color_hsv_low:  [0,   0,   0]
+    color_hsv_high: [180, 80,  80]
+    color_name: "black_anodized"
+
+  m20_100:
+    label: "M20x100 Bolt"
+    dimensions: [0.020, 0.020, 0.100]    # approximate (cylinder)
+    half_height: 0.050
+    mass: 0.040
+    color_hsv_low:  [0,   0,  20]
+    color_hsv_high: [180, 60, 120]
+    color_name: "burnished_metal"
+
+  nut_m20:
+    label: "M20 Hex Nut"
+    dimensions: [0.030, 0.030, 0.016]    # 30 mm AF, 16 mm height
+    half_height: 0.008
+    mass: 0.056
+    color_hsv_low:  [0,   0,  20]
+    color_hsv_high: [180, 60, 120]
+    color_name: "burnished_metal"
+
+  attc_cube:
+    label: "ATTC Cube (AprilTag)"
+    dimensions: [0.042, 0.042, 0.042]
+    half_height: 0.021
+    mass: 0.050
+    color_hsv_low:  [0,   0, 160]
+    color_hsv_high: [180, 40, 255]
+    color_name: "white"
+
+# ---- Simulation: known object positions (match atwork_2024.world) ----
+# Used by object_detector in sim mode (use_sim=True).
+# frame_id: map
+# These are CENTRE positions (x, y, z) and yaw.
+sim_object_positions:
+  obj_f20_1:
+    type: f20_20
+    position: [2.15, -0.35, 0.15]      # same as world file
+    yaw: 0.0
+    workspace: WS01
+
+  obj_m20_1:
+    type: nut_m20
+    position: [2.10, -0.30, 0.108]     # corrected z (table_top 0.10 + half_height 0.008)
+    yaw: 0.0
+    workspace: WS01
+
+  obj_s40_1:
+    type: s40_40
+    position: [1.85, 1.20, 0.15]       # same as world file
+    yaw: 0.0
+    workspace: WS02
+
+  attc_1:
+    type: attc_cube
+    position: [1.90, 1.25, 0.121]      # corrected z (table_top 0.10 + half_height 0.021)
+    yaw: 0.0
+    workspace: WS02
+
+# ---- Gripper close position per object type ----
+# Adjust how far the gripper closes depending on object width.
+# Values are gripper_left_joint position (metres).
+grasp_gripper:
+  f20_20:   -0.004   # 20 mm width → nearly closed
+  s40_40:    0.000   # 40 mm width → partially closed
+  m20_100:  -0.004
+  nut_m20:  -0.002   # flat, grip firmly
+  attc_cube: 0.001   # 42 mm cube
+  default:  -0.005

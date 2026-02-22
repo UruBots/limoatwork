@@ -88,118 +88,8 @@
         <origin xyz="${-wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="${M_PI} 0 0" />
     </xacro:limo_wheel>
     
-    <gazebo reference="imu_link">
-    <gravity>true</gravity>
-    <sensor name="twr_imu" type="imu">
-      <always_on>true</always_on>
-      <update_rate>100</update_rate>
-      <visualize>true</visualize>
-      <imu>
-        <orientation>
-          <x>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-3</stddev>
-            </noise>
-          </x>
-          <y>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-3</stddev>
-            </noise>
-          </y>
-          <z>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-3</stddev>
-            </noise>
-          </z>
-        </orientation>
-        <angular_velocity>
-          <x>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-4</stddev>
-            </noise>
-          </x>
-          <y>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-4</stddev>
-            </noise>
-          </y>
-          <z>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-4</stddev>
-            </noise>
-          </z>
-        </angular_velocity>
-        <linear_acceleration>
-          <x>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>1.7e-2</stddev>
-            </noise>
-          </x>
-          <y>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>1.7e-2</stddev>
-            </noise>
-          </y>
-          <z>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>1.7e-2</stddev>
-            </noise>
-          </z>
-        </linear_acceleration>
-      </imu>
-      <plugin name="two_wheeled_robot_imu" filename="libgazebo_ros_imu_sensor.so">
-        <initial_orientation_as_reference>false</initial_orientation_as_reference>
-        <frame_name>imu_link</frame_name>
-        <ros>
-          <namespace>/imu</namespace>
-          <remapping>~/out:=data</remapping>
-        </ros>
-      </plugin>
-    </sensor>
-</gazebo>
-<gazebo reference="laser_link">
-    <sensor name="laser" type="ray">
-      <always_on>true</always_on>
-      <visualize>true</visualize>
-      <update_rate>10</update_rate>
-      <ray>
-        <scan>
-          <horizontal>
-            <samples>120</samples>
-            <resolution>1.000000</resolution>
-            <min_angle>-3.14159</min_angle>
-            <max_angle>3.14159</max_angle>
-          </horizontal>
-        </scan>
-        <range>
-          <min>0.3</min>
-          <max>15.0</max>
-          <resolution>0.015</resolution>
-        </range>
-        <noise>
-          <type>gaussian</type>
-          <mean>0.0</mean>
-          <stddev>0.01</stddev>
-        </noise>
-      </ray>
-      <plugin name="scan" filename="libgazebo_ros_ray_sensor.so">
-        <ros>
-          <remapping>~/out:=scan</remapping>
-        </ros>
-        <output_type>sensor_msgs/LaserScan</output_type>
-        <frame_name>laser_link</frame_name>
-      </plugin>
-    </sensor>
-  </gazebo>
+    <!-- IMU and Laser sensor plugins for classic Gazebo removed.
+         Ignition-native sensor plugins are declared in limo_manipulator.xacro. -->
     
     <gazebo reference="front_left_wheel">
         <mu1>100</mu1>
@@ -237,32 +127,8 @@
         <fdir1>1 0 0</fdir1>
         <maxContacts value="64"/>
     </gazebo>
-    <gazebo>
-        <plugin name="four_diff_controller" filename="libgazebo_ros_diff_drive.so">
-
-        <update_rate>50</update_rate>
-        <num_wheel_pairs>2</num_wheel_pairs>
-        <left_joint>front_left_wheel</left_joint>
-        <right_joint>front_right_wheel</right_joint>
-        <left_joint>rear_left_wheel</left_joint>
-        <right_joint>rear_right_wheel</right_joint>
-        <wheel_separation>0.172</wheel_separation>
-        <wheel_diameter>0.09</wheel_diameter>
-        <max_wheel_torque>20</max_wheel_torque>
-        <max_wheel_acceleration>1.0</max_wheel_acceleration>
-        <command_topic>cmd_vel</command_topic>
-        <publish_odom>true</publish_odom>
-        <publish_odom_tf>true</publish_odom_tf>
-        <publish_wheel_tf>true</publish_wheel_tf>
-        <odometry_topic>odom</odometry_topic>
-        <odometry_frame>odom</odometry_frame>
-        <robot_base_frame>base_footprint</robot_base_frame>
-        <odometry_source>1</odometry_source>
-        <ros>
-            <remapping>odom:=/odometry</remapping>
-        </ros>
-        </plugin> 
-    </gazebo>
+    <!-- Classic Gazebo diff-drive plugin removed.
+         Ignition-native gz-sim-diff-drive-system is declared in limo_manipulator.xacro. -->
         <!-- <gazebo reference="depth_camera_link">
           <sensor name="sensor_camera" type="depth">
             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>

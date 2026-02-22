@@ -1,0 +1,206 @@
+Chapter 8. Virtual RoboCup
+
+73
+
+Chapter 8
+
+Virtual RoboCup
+8.1 General
+Since the start of the the Covid-19 pandemic, the RoboCups could not take place in person. In 2021,
+the first virtual RoboCup was hosted online, requiring teams to livestream their robots performance
+in their own laboratory. A ruleset was created that made a fair competition possible, which may be
+used for future online RoboCups.
+Participating teams have to follow the guideline to provide an infrastructure that enables the TC and
+OC to evaluate their performance and to communicate during the competitions. As the organization
+of such an online event is rather new for everyone and requires extended communication, every team
+should join the official RoboCup@Work discord server (see 2.2.2). Announcements will be made via
+specific channels on this server. Please participate in discussions and ask questions if you have any.
+
+8.2 Arena Setup
+As all teams will have different laboratory setups and some may not have the same resources (open
+space, workstations, etc.) as others, no fixed arena design will be used for a virtual RoboCup@Work.
+We expect that this would either exclude some teams from the competitions or limit others in their
+test scenario design, which is why every team may design their own arena.
+However, to ensure that the different robot performances can be compared using the existing scoring
+system (5.4), some rules are defined to encourage teams to create challenging arena designs. In
+addition to the basic rules described in 3.2, teams are required to consider:
+• The size of the Arena must be atleast 4m x 2m
+• The table placements should force the robot to move around the arena (not all the tables are
+next to each other)
+• Workstations should be accessible via multiple paths, so one of them may be blocked with
+obstacles (8.1 orange dots). Some space must be available for non-blocking obstacles (8.1
+dark green dots).
+• Tables with the heights defined in (5.4) have to be provided (margin = 2cm). If a team doesn’t
+have enough workstations of one type for a test, the TC may allow alternative table heights to
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+74
+
+8.2 Arena Setup
+be used (especially BTT2, ATTs and Final). This rule does not apply for the Rotating Table,
+the Shelf and the Precise Placement station.
+• PPT cavities (a)-(f) (see 3.9) must be provided. Teams may 3D print the cavities using
+the files in the leagues github. Standing objects are excluded. It must be possible to place
+N P LACE + 2 next to each other, so that atleast two decoy cavities can be used.
+• Required arbitrary surfaces types: artificial grass, pvc floor / wood, mirror / aluminum foil,
+(plexi-)glass. These can be found in your local homedepot. (See fig. 8.2(b))
+• One path blocking and one small obstacle must be available both for physical objects and
+barriertape. (See fig. 8.2(a))
+
+Figure 8.1 shows one possible example of an arena configuration in a small area. Table heights are
+measured in cm. The orange dots mark possible path blockades, while the dark green lines mark
+optional obstacle placements.
+
+Figure 8.1: Example Arena for a small VRC Setup — Left: Annotated map - Right: Real Image
+
+(a) Obstacle Placements
+
+(b) Arbitrary Surfaces
+
+Figure 8.2: Example obstacle placements and arbitrary surfaces
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 8. Virtual RoboCup
+
+75
+
+8.3 Files required from Teams
+To enable the committee to generate fair tasks for every team, teams must provide detailed information about their arena and object inventory 1 month prior to the first competition day. A zip-folder
+containing the following data must be sent via our discord server:
+• Atleast two images of the arena from different perspectives. If two cannot cover the whole
+arena, teams must provide as many as needed.
+• A map of the arena with workstations marked (name + height). Teams may use an RVIZ
+screenshot containing the grid (1m cell size) and the occupancy grid (your map), which may
+be annotated using e.g. gimp (see also 8.1).
+• A list of available workstations in their arena (height and amount).
+• Images of the available arbitrary surfaces
+• Images of the available barriertape and obstacles
+• A list of available objects and containers (amount)
+• Image of the objects and containers
+• Images of the robot (all sides)
+• Robot dimensions in meter
+• Which tests the team intends to participate in
+• atWork-commande launchfiles
+The folder must be named VRC-YEAR-info-TEAM-NAME and shall contain the subfolders ARENA,
+OBSTACLES, OBJECT, ROBOT, TESTS, REFBOX. File names must contain information about
+the data (e.g. Arena-Image-1) and must not have default names (e.g. IMG2012).
+
+8.4 Qualification for the competitions
+The TC will decide if the individual arenas qualify for the tests defined in 5.4. The main requirements
+are already specified in 8.2, while the table describes individual task requirements more precisely.
+If an arena does not qualify, the TC must notify the team 3 weeks before competition starts, briefing
+the team about shortcomings and possible solutions. The team then has 1 week to follow the TCs
+advice and provide a new zip-folder. If an arena does not qualify for a test, the TC may decide
+to exclude the associated team from those. If an arena only partly qualifies (e.g. no barriertape
+available), score adjustments can be made.
+
+8.5 Camera Setup
+Since the referees are not present at the arena during the Virtual RoboCup, the arena and all activities
+of the robot must be shown via livestream. For this purpose, cameras must be able to monitor the
+entire arena for the referees and the cameras should be mounted at least at head height. No blind
+spots are allowed when streaming the arena, so that the referees can see and evaluate every activity
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+76
+
+8.6 Task Generation
+
+of the robot. Furthermore, the PC used to start the runs should also be monitored with the cameras
+so that the referees can observe every interaction with the PC. One or more cameras can be used to
+stream the arena. The OC will announce the streaming software used and the maximum number of
+livestreams available before the competition.
+In addition to the cameras for the arena, there must be a person who follows the robot with a mobile
+camera and shows the robot’s activities from close up. This allows the referees to detect even small
+mistakes. The person is allowed to enter the arena during the run. However, the person is not
+allowed to interact with the robot.
+A camera may also be attached to the robot to better show the robot’s activities to the referees and
+spectators. The camera on the robot is optional.
+
+8.6 Task Generation
+The new atWork-commander implementation, which can be found here (https://github.com/robocupat-work/atwork-commander), gives great opportunity to generate individual tasks for every participating team.
+We advise all teams to use and test the new Atwork Commander. Teams must send configuration
+files for the new Atwork Commander with their arena design, so that the TC/OC can generate tasks
+for their arena. The config file for the arena shall contain the workstation names and heights and the
+available objects for a team. Teams may contact the committee via Discord if they face problems
+with this.
+As normally the atWork-commander would be provided by the OC onsite, no actual atWork-commander
+will be used during the online competition. The OC will create the tasks for the tests using the official
+atWork-commander and the parameters provided by the teams. For each test, a single bagfile (10s)
+will be recorded which contains all topics published by the atwork commander.
+Teams must be able to play a bagfile on an external computer, which is connected to the robot via
+WiFi. The bagfile then must be played to start a competition. The robot should receive the task
+and start with the execution phase.
+To prevent incompatible bagfiles during the competition, the OC will provide test bagfiles 2 weeks
+before official competitions begin. The working parameter and launchfiles will be saved and used to
+generate the specific task bagfiles for the competition.
+
+8.7 Competition Test Procedure
+8.7.1 Preparation
+Before a test begins, the OC will announce obstacle placements, object positions and arbitrary surface
+application to a team 10 minutes prior to their timeslot. Teams must prepare the arena accordingly.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+Chapter 8. Virtual RoboCup
+
+77
+
+The task bagfile will be sent out to the team 5 minutes before their official timeslot. Note: The
+durations may be modified during the competitions if they show to be unsuitable.
+
+8.7.2 Test Start
+The OC may count down before a competition (3, 2, 1, go), after which they start a timer according
+to the test durations in 5.4. On GO command, the active team may access the keyboard of the
+remote pc only to start the bagfile. The cameraman/-woman must show that to the audience.
+
+8.7.3 Test Run
+The audience and especially the refs watch the livestream and rate the performance. In case of a
+major collision or any other reason for a restart, the remote pc keyboard may be accessed to restart
+the robot and the bagfile. The replay of the bagfile command must be shown to the audience once
+again, and afterwards the keybord must not be used anymore.
+
+8.7.4 Test End
+The run ends when the timer is up, with an optional margin of five seconds due to the possible
+network delay. The refs then gather and discuss their performance evaluation.
+
+8.8 Scoring
+The different arena setups make time bonuses unfair and therefore they wont be awarded. The rest
+of the scoring will be the same as in a normal robocup scenario, with score/runtime adjustments
+and/or penalty points possible to compensate for missing test elements (see 8.2). Such adjustments
+could be:
+• The runtime for a test may be reduced if the arena is very small
+• If no barriertape is available, all penalty points for crossing will be applied
+• If no arbitrary surface is available, the object to pick will also be removed.
+• No containers = no placement points given
+Depending on the arena setups of all teams, these rules will be defined more precisely before the
+competitions begin.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+78
+
+8.9 Technical Challenges
+
+8.9 Technical Challenges
+A virtual robocup will focus on the main competition. No technical challenges will be performed
+during the official competitions. As some teams still requested technical challenges, we accept
+submissions by video. This is because that we expect a relatively tight schedule due to the different
+time zones of the teams and we are unsure if the technical challenges may be performed otherwise.
+As the challenges do not count into the official scoring, teams are allowed to modify their arena.
+They still must stick to the rules defined in ??. The bagfile for the specific challenge will be sent
+out to the teams on the first day of the competitions. Teams are required to record a video of their
+challenge with a camera setup similar to 8.5, which must be cut in a way that it is possible to see
+every region of interest (robot, no operator on pc, arena) at all times. The video must be rendered
+to mp4 format and uploaded to a cloud (e.g. onedrive). Teams must provide a link to their video
+via our discord server with the deadline set to last competition day, more specificly the beginning of
+the final runs.
+The committee will review all submissions and rate the individual performances with the help of
+the referee team after the finals have been completed. Videos that exceed the deadline will not be
+reviewed and the teams participation in the challenge will be cancelled.
+
+RoboCup@Work Rulebook / Release 1.0 version for RoboCup 2024
+
+

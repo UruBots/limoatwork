@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+<robot name="limo_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Include Limo Robot -->
+  <xacro:include filename="$(find limo_description)/urdf/limo_four_diff.xacro" />
+
+  <!-- Include OpenManipulator-X -->
+  <xacro:include filename="$(find open_manipulator_description)/urdf/open_manipulator_x/open_manipulator_x_arm.urdf.xacro" />
+  <xacro:include filename="$(find open_manipulator_description)/gazebo/open_manipulator_x.gazebo.xacro" />
+  
+  <!-- Include our custom ros2_control for the arm -->
+  <xacro:include filename="$(find limo_manipulator_description)/urdf/manipulator_control.ros2_control.xacro" />
+
+  <!-- Attachment point for the manipulator.
+       LIMO chassis dimensions: base_z_size=0.10 m centered at base_link.
+       Top surface of chassis is at z=+0.05 m from base_link.
+       The arm is bolted on the front-top plate, so z=+0.05.
+       x=0.04 m forward keeps the arm centred over the front half of the chassis. -->
+  <joint name="manipulator_mounting_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="link1" />
+    <origin xyz="0.04 0.0 0.05" rpy="0 0 0" />
+  </joint>
+
+  <!-- OpenManipulator-X Arm Macro -->
+  <xacro:open_manipulator_x prefix="" />
+  
+  <!-- Gazebo properties for OpenManipulator -->
+  <xacro:open_manipulator_x_gazebo prefix="" />
+
+  <!-- Integrated ros2_control hardware interface for the arm -->
+  <xacro:limo_manipulator_control prefix="" />
+
+  <!-- Gazebo Sim Plugins -->
+  <gazebo>
+    <plugin filename="ign_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find limo_manipulator_bringup)/config/controllers.yaml</parameters>
+    </plugin>
+    <!-- Joint State Publisher for Gazebo Sim -->
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <topic>joint_states</topic>
+    </plugin>
+
+    <!-- Limo Base Diff Drive (4-wheel simplified) -->
+    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+      <left_joint>front_left_wheel</left_joint>
+      <left_joint>rear_left_wheel</left_joint>
+      <right_joint>front_right_wheel</right_joint>
+      <right_joint>rear_right_wheel</right_joint>
+      <wheel_separation>0.172</wheel_separation>
+      <wheel_radius>0.045</wheel_radius>
+      <!-- 20 Hz is enough for Nav2; 50 Hz added unnecessary CPU/bus load -->
+      <odom_publish_frequency>20</odom_publish_frequency>
+      <topic>cmd_vel</topic>
+      <odom_topic>odom</odom_topic>
+      <tf_topic>/tf</tf_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+    </plugin>
+  </gazebo>
+
+  <!-- Override Lidar for Gazebo Sim (Ignition Fortress uses gpu_lidar type) -->
+  <!-- Performance tuning:
+       - visualize=false  → no OpenGL scan-line rendering overlay in Gazebo GUI
+       - samples=360      → half resolution (1° per sample), sufficient for Nav2
+       - update_rate=8    → slightly below 10 Hz to reduce GPU lidar compute -->
+  <gazebo reference="laser_link">
+    <sensor name="laser_sensor" type="gpu_lidar">
+      <topic>scan</topic>
+      <update_rate>8</update_rate>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>-2.094395</min_angle>
+            <max_angle>2.094395</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.05</min>
+          <max>8.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </lidar>
+      <always_on>1</always_on>
+      <visualize>false</visualize>
+    </sensor>
+  </gazebo>
+
+  <!-- IMU for Gazebo Sim — reduced rate, no visualize -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>1</always_on>
+      <update_rate>50</update_rate>
+      <visualize>false</visualize>
+      <topic>imu</topic>
+    </sensor>
+  </gazebo>
+
+  <!-- ================================================================
+       RGB Camera for AprilTag detection
+       Mounted on the robot body above the arm, angled forward-down
+       to observe the workspace (tables at ~10 cm height).
+       Frame: camera_link
+       ================================================================ -->
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.025 0.090 0.025"/>
+      </geometry>
+      <material name="camera_black">
+        <color rgba="0.1 0.1 0.1 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="0.072"/>
+      <inertia ixx="3e-5" ixy="0" ixz="0" iyy="3e-5" iyz="0" izz="3e-5"/>
+    </inertial>
+  </link>
+
+  <!-- Camera optical frame (Z forward, X right, Y down — ROS convention) -->
+  <link name="camera_color_optical_frame"/>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <!--
+      Camera is on a vertical mast, ABOVE the maximum arm reach.
+
+      Gazebo convention: positive pitch (rpy="0 +θ 0") tilts lens forward-down.
+
+      Key constraint: OpenManipulator-X max height above its base ≈ 0.38 m.
+      Mounted at z=0.05 m, the arm top is at most z ≈ 0.43 m from base_link.
+      Setting camera at z=0.52 m puts it 9 cm above maximum arm extension,
+      so the arm can NEVER enter the camera's upper FOV regardless of pose.
+
+      x = +0.05 m  → slightly forward of chassis centre (mast on front deck).
+      z = +0.52 m  → 52 cm above base_link ≈ 67 cm above ground. Above the
+                      tallest possible arm configuration (≈ 43 cm).
+      pitch = +50° → steeper tilt to compensate for the greater height:
+                      optical-axis at table height (0.10 m) falls
+                      ≈ 0.05 + (0.57)/tan(50°) ≈ 0.53 m in front of robot,
+                      centred on the manipulation workspace (0.3–0.8 m).
+    -->
+    <origin xyz="0.05 0.0 0.52" rpy="0.0 0.873 0.0"/>
+  </joint>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_color_optical_frame"/>
+    <!-- Standard ROS optical frame rotation: z-forward, x-right, y-down -->
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
+  <!-- Gazebo camera sensor (RGB) -->
+  <gazebo reference="camera_link">
+    <sensor name="rgb_camera" type="camera">
+      <topic>camera/image_raw</topic>
+      <camera>
+        <horizontal_fov>1.047</horizontal_fov>  <!-- 60 deg FOV -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>3.0</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.005</stddev>
+        </noise>
+      </camera>
+      <always_on>1</always_on>
+      <!-- 5 Hz is enough to detect AprilTags; 15 Hz causes unnecessary GPU load -->
+      <update_rate>5</update_rate>
+      <visualize>false</visualize>
+    </sensor>
+  </gazebo>
+
+</robot>

@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="container_blue">
+    <static>false</static>
+    <link name="link">
+      <inertial>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.160 0.135 0.082</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.160 0.135 0.082</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0 0.3 0.6 1</ambient> <!-- RAL 5015 approx -->
+          <diffuse>0 0.3 0.6 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

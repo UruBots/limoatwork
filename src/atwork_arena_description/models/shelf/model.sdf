@@ -1,0 +1,93 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="shelf">
+    <static>true</static>
+    <link name="link">
+      <!-- Base Table (10cm) -->
+      <collision name="base_collision">
+        <pose>0 0 0.05 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.5 0.8 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="base_visual">
+        <pose>0 0 0.05 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.5 0.8 0.1</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Upper Shelf (40cm height, 15cm offset as per fig 3.7) -->
+      <collision name="top_collision">
+        <pose>-0.075 0 0.4 0 0 0</pose> <!-- Offset horizontally to leave 15cm free at the front -->
+        <geometry>
+          <box>
+            <size>0.35 0.8 0.02</size> <!-- 50cm deep total - 15cm free = 35cm -->
+          </box>
+        </geometry>
+      </collision>
+      <visual name="top_visual">
+        <pose>-0.075 0 0.40 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.35 0.8 0.02</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Supports -->
+      <collision name="support_left">
+        <pose>-0.24 0.39 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.3</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="support_left_visual">
+        <pose>-0.24 0.39 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.3</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.5 0.5 0.5 1</ambient>
+          <diffuse>0.5 0.5 0.5 1</diffuse>
+        </material>
+      </visual>
+      <collision name="support_right">
+        <pose>-0.24 -0.39 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.3</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="support_right_visual">
+        <pose>-0.24 -0.39 0.25 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.3</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.5 0.5 0.5 1</ambient>
+          <diffuse>0.5 0.5 0.5 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

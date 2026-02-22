@@ -43,7 +43,7 @@ def generate_launch_description():
         'bt_xml_file',
         default_value=os.path.join(
             get_package_share_directory('nav2_bt_navigator'),
-            'behavior_trees', 'navigate_w_replanning_and_recovery.xml'),
+            'behavior_trees', 'navigate_to_pose_w_replanning_and_recovery.xml'),
         description='Full path to the behavior tree xml file to use')
     declare_autostart_cmd = DeclareLaunchArgument(
         'autostart', default_value='true',
@@ -82,11 +82,12 @@ def generate_launch_description():
         output='screen',
         parameters=[{'use_sim_time': use_sim_time},
                     {'autostart': autostart},
+                    {'bond_timeout': 120.0},
                     {'node_names': ['map_server',
                                     'amcl',
                                     'controller_server',
                                     'planner_server',
-                                    'recoveries_server',
+                                    'behavior_server',
                                     'bt_navigator',
                                     'waypoint_follower']}])
 
@@ -101,7 +102,9 @@ def generate_launch_description():
     ld.add_action(start_lifecycle_manager_cmd)
     ld.add_action(start_localization_cmd)
     ld.add_action(start_navigation_cmd)
-    
+
+    return ld
+
 
 if __name__ == '__main__':
     generate_launch_description()

@@ -7,7 +7,7 @@ from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 
-from nav2_common.launch import Node
+from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
@@ -73,7 +73,6 @@ def generate_launch_description():
             name='amcl',
             output='screen',
             parameters=[configured_params],
-            use_remappings=IfCondition(use_remappings),
             remappings=remappings),
 
         Node(
@@ -92,6 +91,5 @@ def generate_launch_description():
             name='map_server',
             output='screen',
             parameters=[configured_params],
-            use_remappings=IfCondition(use_remappings),
             remappings=remappings),
     ])

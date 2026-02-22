@@ -1,0 +1,48 @@
+# arm_poses.yaml
+# Named joint configurations for OpenManipulator-X on LIMO.
+# Joints: [joint1, joint2, joint3, joint4]  (all in radians)
+#
+#   joint1 = base rotation   (+right / -left when viewed from above)
+#   joint2 = shoulder         (+forward-down / -back-up)
+#   joint3 = elbow            (+bend forward / -extend)
+#   joint4 = wrist            (adjusts end-effector angle)
+#
+# The arm is mounted at xyz="0.05 0.0 0.15" on base_link.
+# Table surface is at z=0.10m (10 cm height).
+# => Table is ~5 cm BELOW the arm mounting point.
+#
+# !! IMPORTANT: these values are approximate starting points.
+#    Tune them empirically on your physical robot / fine-tuned sim. !!
+
+poses:
+  # Safe home/transport position — arm folded back and up
+  home:        [0.0, -1.0,  0.7,  0.3]
+
+  # Looking down at the table in front (scan position for camera)
+  scan:        [0.0,  0.5, -0.2, -0.7]
+
+  # Pre-grasp: hovering ~10 cm above the table surface (approach height)
+  pre_grasp:   [0.0,  0.8,  0.0, -1.0]
+
+  # Grasp: end-effector at table surface level (~10 cm from ground)
+  # Fine Z is achieved by the object-specific offset in objects_config.yaml
+  grasp:       [0.0,  1.0,  0.2, -1.2]
+
+  # Carrying position: object held safely above obstacle height
+  carry:       [0.0, -0.5,  0.5,  0.0]
+
+  # Pre-place: hovering above the delivery zone
+  place_ready: [0.0,  0.5, -0.1, -0.8]
+
+# ---- Gripper ----
+# Positions in meters (gripper_left_joint / JointTrajectoryController)
+gripper:
+  open:    0.019   # fully open  (from SRDF named state "open")
+  close:  -0.010   # fully closed (from SRDF named state "close")
+  partial: 0.005   # partial close for fragile/small objects
+
+# ---- Trajectory timing ----
+timing:
+  joint_move_duration:   2.5   # seconds per waypoint transition
+  gripper_move_duration: 1.0   # seconds for gripper open/close
+  settle_wait:           0.8   # seconds to wait after motion completes
