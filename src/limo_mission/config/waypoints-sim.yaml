@@ -1,33 +1,37 @@
 frame_id: map
 
 waypoints:
-  # WS01 table is at (2.15, -0.35) yaw=-0.66 rad in atwork_2024.world.
-  # Robot is positioned 0.35 m in front of the table face so the arm
-  # (extending forward from base_link) aligns with the table surface.
-  # robot_pos = table_pos + table_front_dir * 0.35 = (2.43, -0.56)
-  # robot_yaw = atan2(-sin(-0.66), -cos(-0.66)) = 2.48 rad (facing back to table)
+  # WS01 table: world (2.15,-0.35) yaw=-0.66 rad, size 0.5×0.8 m.
+  # Front barrier has NO collision → robot can approach to 0.44 m from table center:
+  #   table half_x (0.25) + robot half-length (0.16) + safety (0.03) = 0.44 m
+  # Arm tip (grasp reach 0.302 m) lands at local_x=0.138 m inside the table front half.
   WS01:
-    x: 2.43
-    y: -0.56
-    yaw: 2.48
+    x: 2.498
+    y: -0.620
+    yaw: 2.482
 
-  # WS02 table is at (1.85, 1.20) yaw=0.30 rad in atwork_2024.world.
-  # Robot positioned 0.35 m in front of the table face.
-  # robot_pos = (2.18, 1.30), robot_yaw = -2.84 rad (facing back to table)
+  # WS02 table: world (1.85,1.20) yaw=0.30 rad, size 0.5×0.8 m. Same geometry.
   WS02:
-    x: 2.18
-    y: 1.30
-    yaw: -2.84
+    x: 2.270
+    y: 1.330
+    yaw: -2.842
 
   START:
     x: 0.0
     y: 0.0
     yaw: 0.0
 
+# Waypoints that are delivery zones: arriving here triggers PLACE (not pick).
+# Workstations NOT in this list trigger PICK on arrival.
+delivery_zones: [START]
+
 routes:
+  # Competition mission:
+  #   WS01 → pick → START → place → WS02 → pick → START → place
+  full_mission:    [WS01, START, WS02, START]
+
+  # Legacy / debug routes
   test_route:      [WS01, WS02]
   back_to_start:   [WS01, WS02, START]
-  # Pick at WS01 only, stay there; place triggered after route ends
   pick_ws01:       [WS01]
-  # Pick at WS01 → navigate back to START → place triggered after route ends
   pick_and_return: [WS01, START]

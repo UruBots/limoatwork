@@ -120,12 +120,15 @@ class MissionManager(Node):
         self.route_name = self.get_parameter("route_name").value
         wp_path = self.get_parameter("waypoints_yaml").value
 
-        self.frame_id, self.wp_map, self.route = self._load_waypoints_and_route(wp_path, self.route_name)
+        self.frame_id, self.wp_map, self.route, self.delivery_zones = \
+            self._load_waypoints_and_route(wp_path, self.route_name)
         if not self.route:
             raise RuntimeError(f"Route '{self.route_name}' is empty or does not exist in YAML.")
 
-        self.get_logger().info(
-            f"frame_id='{self.frame_id}', route='{self.route_name}' with {len(self.route)} WS: {self.route}"
+        delivery_info = f", delivery zones: {self.delivery_zones}" if self.delivery_zones else ""
+        self._info(
+            f"frame_id='{self.frame_id}', route='{self.route_name}' "
+            f"with {len(self.route)} stops: {self.route}{delivery_info}"
         )
 
         # Callback group for thread-safe operations
@@ -161,6 +164,21 @@ class MissionManager(Node):
         # Timer to start mission after a brief delay
         self.start_timer = self.create_timer(1.0, self._on_start_timer, callback_group=self.cb_group)
 
+    # -------------------------
+    # Coloured logging helpers
+    # -------------------------
+    _BLUE  = '\033[94m'
+    _RESET = '\033[0m'
+
+    def _info(self, msg: str) -> None:
+        self.get_logger().info(f'{self._BLUE}{msg}{self._RESET}')
+
+    def _warn(self, msg: str) -> None:
+        self.get_logger().warn(f'{self._BLUE}{msg}{self._RESET}')
+
+    def _error(self, msg: str) -> None:
+        self.get_logger().error(f'{self._BLUE}{msg}{self._RESET}')
+
     def _on_start_timer(self):
         self.start_timer.cancel()
         threading.Thread(target=self._run_mission, daemon=True).start()
@@ -190,13 +208,15 @@ class MissionManager(Node):
                 yaw=float(v["yaw"]),
             )
 
+        delivery_zones: List[str] = data.get("delivery_zones", [])
+
         routes = data.get("routes", {})
         route_list = routes.get(route_name, [])
         for ws_name in route_list:
             if ws_name not in wp_map:
                 raise RuntimeError(f"WS '{ws_name}' in route '{route_name}' does not exist in waypoints.")
 
-        return frame_id, wp_map, route_list
+        return frame_id, wp_map, route_list, delivery_zones
 
     # -------------------------
     # Pose helper
@@ -227,16 +247,23 @@ class MissionManager(Node):
         msg.pose.pose.position.x = float(x)
         msg.pose.pose.position.y = float(y)
         msg.pose.pose.orientation = yaw_to_quat(float(yaw))
+        # Small covariance = high certainty about initial pose
+        msg.pose.covariance[0] = 0.1   # x variance
+        msg.pose.covariance[7] = 0.1   # y variance
+        msg.pose.covariance[35] = 0.05  # yaw variance
 
-        self.get_logger().info(f"Publishing initial pose: x={x}, y={y}, yaw={yaw}")
-        self.initial_pose_pub.publish(msg)
+        self._info(f"Publishing initial pose: x={x}, y={y}, yaw={yaw}")
+        # Publish multiple times to ensure AMCL receives it
+        for _ in range(3):
+            self.initial_pose_pub.publish(msg)
+            time.sleep(0.5)
 
     # -------------------------
     # Action helpers
     # -------------------------
     def _wait_server(self, client: ActionClient, name: str, timeout_sec: float = 30.0) -> bool:
         if not client.wait_for_server(timeout_sec=timeout_sec):
-            self.get_logger().error(f"Action server {name} not available.")
+            self._error(f"Action server {name} not available.")
             return False
         return True
 
@@ -246,24 +273,24 @@ class MissionManager(Node):
         t0 = time.time()
         while not send_future.done():
             if time.time() - t0 > goal_response_timeout:
-                self.get_logger().error(f"Timeout ({goal_response_timeout}s) waiting for goal response.")
+                self._error(f"Timeout ({goal_response_timeout}s) waiting for goal response.")
                 return False
             time.sleep(0.1)
 
         gh = send_future.result()
         if gh is None:
-            self.get_logger().error("GoalHandle not received (None).")
+            self._error("GoalHandle not received (None).")
             return False
 
         if not gh.accepted:
-            self.get_logger().error("Goal rejected (accepted=False).")
+            self._error("Goal rejected (accepted=False).")
             return False
 
         result_future = gh.get_result_async()
         t0 = time.time()
         while not result_future.done():
             if time.time() - t0 > timeout_sec:
-                self.get_logger().error("Timeout waiting for result. Cancelling...")
+                self._error("Timeout waiting for result. Cancelling...")
                 gh.cancel_goal_async()
                 return False
             time.sleep(0.1)
@@ -341,7 +368,7 @@ class MissionManager(Node):
         rate = float(self.get_parameter("dock_control_rate_hz").value)
         timeout = float(self.get_parameter("dock_timeout_sec").value)
 
-        self.get_logger().info(
+        self._info(
             f"Wall docking started: target={target:.3f}m, scan={self.scan_topic}, cmd_vel={self.cmd_vel_topic}"
         )
 
@@ -352,7 +379,7 @@ class MissionManager(Node):
         while rclpy.ok():
             if time.time() - t0 > timeout:
                 self._publish_stop()
-                self.get_logger().warn("Docking timeout.")
+                self._warn("Docking timeout.")
                 return False
 
             # ensure we have a recent scan
@@ -385,7 +412,7 @@ class MissionManager(Node):
 
             if docked:
                 self._publish_stop()
-                self.get_logger().info(
+                self._info(
                     f"DOCKED ✅ front={front:.3f} err={err_dist:.3f} left-right={err_ang:.3f}"
                 )
                 return True
@@ -412,32 +439,38 @@ class MissionManager(Node):
         """Call a manipulation Trigger service and return success."""
         manipulation_timeout = float(self.get_parameter("manipulation_timeout_sec").value)
         if not client.wait_for_service(timeout_sec=5.0):
-            self.get_logger().warn(f'Manipulation service {service_name} not available.')
+            self._warn(f'Manipulation service {service_name} not available.')
             return False
         future = client.call_async(Trigger.Request())
         # Spin until complete (blocking within this daemon thread)
         deadline = time.monotonic() + manipulation_timeout
         while not future.done():
             if time.monotonic() > deadline:
-                self.get_logger().error(f'{service_name} timed out.')
+                self._error(f'{service_name} timed out.')
                 return False
             time.sleep(0.1)
         result = future.result()
         if not result.success:
-            self.get_logger().warn(f'{service_name}: {result.message}')
+            self._warn(f'{service_name}: {result.message}')
         return result.success
 
+    def _clear_costmaps(self):
+        """Clear both local and global costmaps to reset any stale obstacle data."""
+        from std_srvs.srv import Empty
+        for costmap in ['/local_costmap/clear_entirely_local_costmap',
+                        '/global_costmap/clear_entirely_global_costmap']:
+            client = self.create_client(Empty, costmap)
+            if client.wait_for_service(timeout_sec=1.0):
+                client.call_async(Empty.Request())
+                self._info(f"Cleared {costmap.split('/')[1]}")
+
     def _set_manipulation_workspace(self, ws_name: str):
-        """Update manipulation_manager's 'workspace' parameter."""
+        """Update both manipulation_manager and object_detector 'workspace' parameter."""
         if not self.pick_client.wait_for_service(timeout_sec=1.0):
             return  # manipulation not running, ignore
-        # Use parameter service to tell the detector which workspace we're at
         from rcl_interfaces.srv import SetParameters
         from rcl_interfaces.msg import Parameter as RclParam, ParameterValue, ParameterType
-        set_param_client = self.create_client(
-            SetParameters, '/manipulation_manager/set_parameters')
-        if not set_param_client.wait_for_service(timeout_sec=2.0):
-            return
+
         req = SetParameters.Request()
         pval = ParameterValue()
         pval.type = ParameterType.PARAMETER_STRING
@@ -446,14 +479,14 @@ class MissionManager(Node):
         param.name = 'workspace'
         param.value = pval
         req.parameters = [param]
-        self.create_client(SetParameters, '/object_detector/set_parameters')
-        det_client = self.create_client(
-            SetParameters, '/object_detector/set_parameters')
-        if det_client.wait_for_service(timeout_sec=2.0):
-            future = det_client.call_async(req)
-            deadline = time.monotonic() + 3.0
-            while not future.done() and time.monotonic() < deadline:
-                time.sleep(0.05)
+
+        for node_name in ('/manipulation_manager', '/object_detector'):
+            client = self.create_client(SetParameters, f'{node_name}/set_parameters')
+            if client.wait_for_service(timeout_sec=2.0):
+                future = client.call_async(req)
+                deadline = time.monotonic() + 3.0
+                while not future.done() and time.monotonic() < deadline:
+                    time.sleep(0.05)
 
     # -------------------------
     # TF wait helper
@@ -468,7 +501,7 @@ class MissionManager(Node):
         tf_buffer = tf2_ros.Buffer()
         tf_listener = tf2_ros.TransformListener(tf_buffer, self)
         t0 = time.time()
-        self.get_logger().info(
+        self._info(
             f'Waiting for TF: {source_frame} → {target_frame} '
             f'(timeout {timeout_sec:.0f}s) …'
         )
@@ -478,14 +511,14 @@ class MissionManager(Node):
                     target_frame, source_frame, rclpy.time.Time()
                 )
                 elapsed = time.time() - t0
-                self.get_logger().info(
+                self._info(
                     f'TF {source_frame} → {target_frame} available '
                     f'after {elapsed:.1f}s ✅'
                 )
                 return True
             except Exception:
                 time.sleep(0.5)
-        self.get_logger().error(
+        self._error(
             f'TF {source_frame} → {target_frame} not available '
             f'after {timeout_sec:.0f}s — aborting.'
         )
@@ -495,7 +528,7 @@ class MissionManager(Node):
     # Mission loop
     # -------------------------
     def _run_mission(self):
-        self.get_logger().info("Waiting for stabilisation (2s) before first goal...")
+        self._info("Waiting for stabilisation (2s) before first goal...")
         time.sleep(2.0)
 
         self._publish_initial_pose()
@@ -522,58 +555,87 @@ class MissionManager(Node):
         # Ensure Gazebo's DiffDrive has published odom→base_footprint before
         # sending any Nav2 goal — otherwise the first goal is always rejected.
         if not self._wait_for_tf('odom', 'base_footprint', timeout_sec=90.0):
-            self.get_logger().error('odom TF unavailable — aborting mission.')
+            self._error('odom TF unavailable — aborting mission.')
             return
-        # Also wait for map→odom which AMCL publishes once localised
-        if not self._wait_for_tf('map', 'odom', timeout_sec=60.0):
-            self.get_logger().error('map→odom TF unavailable — aborting mission.')
+        # Also wait for map→odom which AMCL publishes once localised.
+        # Use nav2_startup_timeout_sec so it matches the Nav2 action server wait.
+        if not self._wait_for_tf('map', 'odom', timeout_sec=startup_timeout):
+            self._error('map→odom TF unavailable — aborting mission.')
             return
 
         for i, ws_name in enumerate(self.route, start=1):
             wp = self.wp_map[ws_name]
-            self.get_logger().info(
+            self._info(
                 f"[{i}/{len(self.route)}] Navigating to {wp.name} (x={wp.x:.3f}, y={wp.y:.3f}, yaw={wp.yaw:.3f})"
             )
 
-            # 1) NavigateToPose (coarse navigation)
+            # 1) NavigateToPose (coarse navigation) with retry logic
             nav_goal = NavigateToPose.Goal()
             nav_goal.pose = self._pose_stamped(wp.x, wp.y, wp.yaw)
 
-            if not self._send_goal_and_wait(self.nav_client, nav_goal, timeout_sec=nav_timeout):
-                self.get_logger().error(f"{wp.name}: navigation failed. Skipping.")
+            nav_ok = False
+            for nav_attempt in range(1, 4):  # Up to 3 attempts
+                if nav_attempt > 1:
+                    self._info(f"{wp.name}: retrying navigation (attempt {nav_attempt}/3)...")
+                    # Clear costmaps before retry
+                    self._clear_costmaps()
+                    time.sleep(1.0)  # Let costmaps rebuild
+
+                if self._send_goal_and_wait(self.nav_client, nav_goal, timeout_sec=nav_timeout):
+                    nav_ok = True
+                    break
+
+            if not nav_ok:
+                self._error(f"{wp.name}: navigation failed after 3 attempts. Skipping.")
                 continue
 
             # 2) Fine wall docking (skipped in simulation via skip_docking=true)
             if skip_docking:
-                self.get_logger().info(
+                self._info(
                     f"{wp.name}: skip_docking=true — skipping wall docking.")
                 dock_ok = True
             else:
                 dock_ok = False
                 for attempt in range(1, dock_retries + 1):
-                    self.get_logger().info(
+                    self._info(
                         f"{wp.name}: docking attempt {attempt}/{dock_retries}")
                     if self._dock_to_wall():
                         dock_ok = True
                         break
 
             if not dock_ok:
-                self.get_logger().error(f"{wp.name}: docking failed. Moving to next WS.")
+                self._error(f"{wp.name}: docking failed. Moving to next WS.")
                 continue
 
-            # 3) Manipulation: pick object at this workspace
+            # 3) Manipulation: place at delivery zones, pick at workstations
             if enable_manipulation:
-                self.get_logger().info(f"{wp.name}: starting pick...")
-                self._set_manipulation_workspace(ws_name)
-                pick_ok = self._call_manipulation_service(
-                    self.pick_client, '/manipulation/pick')
-                if pick_ok:
-                    self.get_logger().info(f"{wp.name}: object picked ✅")
+                if ws_name in self.delivery_zones:
+                    # ── Delivery zone: place any carried object ──
+                    self._info(f"{wp.name}: placing object in delivery zone...")
+                    place_ok = self._call_manipulation_service(
+                        self.place_client, '/manipulation/place')
+                    if place_ok:
+                        self._info(f"{wp.name}: object placed ✅")
+                    else:
+                        self._warn(f"{wp.name}: place failed (nothing carried?).")
+                    # Fold arm after placing
+                    self._call_manipulation_service(self.home_client, '/manipulation/home')
                 else:
-                    self.get_logger().warn(f"{wp.name}: pick failed (continuing route).")
+                    # ── Workstation: pick object ──
+                    self._info(f"{wp.name}: starting pick...")
+                    self._set_manipulation_workspace(ws_name)
+                    pick_ok = self._call_manipulation_service(
+                        self.pick_client, '/manipulation/pick')
+                    if pick_ok:
+                        self._info(f"{wp.name}: object picked ✅")
+                        # Fold arm to home so LiDAR isn't blocked during navigation.
+                        self._info(f"{wp.name}: folding arm for navigation...")
+                        self._call_manipulation_service(self.home_client, '/manipulation/home')
+                    else:
+                        self._warn(f"{wp.name}: pick failed (continuing route).")
 
             # 4) BackUp (undock)
-            self.get_logger().info(f"{wp.name}: undocking (backup {backup_distance:.2f} m)")
+            self._info(f"{wp.name}: undocking (backup {backup_distance:.2f} m)")
             b = BackUp.Goal()
             b.target = Point(x=abs(backup_distance), y=0.0, z=0.0)
             b.speed = float(backup_speed)
@@ -581,17 +643,17 @@ class MissionManager(Node):
             b.time_allowance.nanosec = 0
 
             if not self._send_goal_and_wait(self.backup_client, b, timeout_sec=backup_timeout + 5.0):
-                self.get_logger().warn(f"{wp.name}: backup failed (continuing anyway).")
+                self._warn(f"{wp.name}: backup failed (continuing anyway).")
 
-            self.get_logger().info(f"{wp.name}: OK ✅")
+            self._info(f"{wp.name}: OK ✅")
 
-        # 5) After all WS: if carrying an object, place it
+        # 5) Safety net: if still carrying an object at end of route, place it now.
+        #    This handles routes that don't end with a delivery zone.
         if enable_manipulation:
-            self.get_logger().info("Route complete: placing object in delivery zone...")
             self._call_manipulation_service(self.place_client, '/manipulation/place')
             self._call_manipulation_service(self.home_client,  '/manipulation/home')
 
-        self.get_logger().info("Route finished ✅")
+        self._info("Route finished ✅")
 
 
 def main():

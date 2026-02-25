@@ -19,7 +19,9 @@ class MapSaverNode(Node):
     def listener_callback(self, msg):
         self.get_logger().info('Trigger received! Saving map...')
 
-        home_dir = os.path.expanduser('/home/solverbot/mapas')
+        # Get the package root directory (src/limo_map_saver/../../..)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        home_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..'))
         map_name = "mapa_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         map_path = os.path.join(home_dir, map_name)  # e.g. /home/solverbot/mapa_...
 

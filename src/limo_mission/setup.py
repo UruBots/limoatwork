@@ -12,7 +12,7 @@ setup(
          ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/config',
-         glob('config/*.yaml')),
+         glob('config/*.yaml') + glob('config/*.xml') + glob('config/*.rviz')),
         ('share/' + package_name + '/launch',
          glob('launch/*.launch.py')),
         ('share/' + package_name + '/scripts',
@@ -32,6 +32,7 @@ setup(
             'dock_server = limo_mission.dock_server:main',
             'wall_docking_node = limo_mission.wall_docking_node:main',
             'pick_and_return_example = limo_mission.pick_and_return_example:main',
+            'odom_to_tf_node = limo_mission.odom_to_tf_node:main',
         ],
     },
 )

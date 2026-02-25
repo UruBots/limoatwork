@@ -1,7 +1,9 @@
 import os
 from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, TimerAction
+from launch.actions import (IncludeLaunchDescription, DeclareLaunchArgument,
+                             TimerAction, SetEnvironmentVariable)
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -36,16 +38,35 @@ def generate_launch_description():
     if not os.path.isfile(sim_nav_params):
         raise FileNotFoundError(f"Simulation nav params not found: {sim_nav_params}")
 
+    # FastDDS: disable shared memory to avoid inter-process communication failures
+    # in simulation (Gazebo + many ROS2 nodes).
+    fastdds_config = os.path.join(pkg_limo_mission, 'config', 'fastdds_no_shm.xml')
+    set_fastdds = SetEnvironmentVariable(
+        name='FASTRTPS_DEFAULT_PROFILES_FILE', value=fastdds_config)
+
     # Launch Configurations
     use_sim_time        = LaunchConfiguration('use_sim_time',        default='true')
     map_file            = LaunchConfiguration('map',                 default=os.path.join(pkg_limo_bringup, 'maps', 'map.yaml'))
-    route_name          = LaunchConfiguration('route_name',          default='test_route')
+    route_name          = LaunchConfiguration('route_name',          default='full_mission')
     enable_manipulation = LaunchConfiguration('enable_manipulation', default='false')
+    start_rviz          = LaunchConfiguration('start_rviz',          default='true')
 
     # 1. Gazebo Simulation
     simulation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(sim_launch_path),
-        launch_arguments={'use_sim_time': use_sim_time}.items()
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            'bridge_tf': 'false'
+        }.items()
+    )
+
+    # 1.5. Odometry: publish TF odom → base_footprint from /odom (/tf bridge can fail)
+    odom_to_tf_node = Node(
+        package="limo_mission",
+        executable="odom_to_tf_node",
+        name="odom_to_tf",
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
     )
 
     # 2. Navigation Stack (Nav2 + AMCL) — uses limo_mission/config/sim_nav_params.yaml
@@ -78,9 +99,18 @@ def generate_launch_description():
             'nav2_startup_timeout_sec': 180.0,
             # No real workstation walls in simulation — skip LiDAR docking entirely
             # and proceed directly from Nav2 arrival to pick.
-            'skip_docking': True,
+            'skip_docking': False,
             'dock_timeout_sec': 2.0,
             'dock_retries': 1,
+            # After picking, back up 0.20 m. The arm is first folded to HOME
+            # (see mission_manager._run_mission), so a short backup is enough to
+            # clear the workstation's inflation zone.  0.50 m caused the robot
+            # to back into the arena wall at y≈-1.11 when arriving near the
+            # WS01 tolerance boundary (xy_goal_tolerance=0.25 m pushes worst-case
+            # landing to y≈-0.99, still > 0.11 m clear of the lethal zone).
+            'backup_distance': 0.20,
+            'backup_speed': 0.10,
+            'backup_timeout_sec': 6.0,
             # Passed from CLI: ros2 launch ... enable_manipulation:=true
             'enable_manipulation': enable_manipulation,
         }]
@@ -92,6 +122,19 @@ def generate_launch_description():
         launch_arguments={'use_sim': 'true'}.items()
     )
 
+    # 5. RViz (mapa, robot, láser; opcional con start_rviz:=false)
+    rviz_config = os.path.join(pkg_limo_mission, 'config', 'sim_slam.rviz')
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2_mission',
+        arguments=['-d', rviz_config],
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen',
+        condition=IfCondition(start_rviz),
+    )
+    delayed_rviz = TimerAction(period=25.0, actions=[rviz_node])
+
     # Delay Nav2 so Gazebo has time to publish odom TF before Nav2 tries to activate.
     # The DiffDrive plugin needs a few sim steps after robot spawn to publish odom→base_link.
     delayed_navigation = TimerAction(period=20.0, actions=[navigation])
@@ -101,16 +144,26 @@ def generate_launch_description():
     # Wait until t=45 s to give extra margin.
     delayed_manipulation = TimerAction(period=45.0, actions=[manipulation])
 
-    # Mission manager waits for TF internally, but give Nav2 + manipulation time to start first.
-    delayed_mission = TimerAction(period=52.0, actions=[mission_manager])
+    # Delay mission manager long enough for:
+    #   - Nav2 lifecycle to activate ALL nodes (AMCL, planner, controller) → ~55 s
+    #   - Manipulation stack (controllers, manipulation_manager) → ~50 s
+    # Using 65 s gives a generous safety margin on slow machines.
+    # mission_manager also waits internally for TF map→odom (AMCL) with a
+    # nav2_startup_timeout_sec=180 s timeout, so even if AMCL is slow it will retry.
+    delayed_mission = TimerAction(period=65.0, actions=[mission_manager])
 
     return LaunchDescription([
+        set_fastdds,
         DeclareLaunchArgument('use_sim_time',        default_value='true'),
-        DeclareLaunchArgument('route_name',          default_value='test_route'),
+        DeclareLaunchArgument('route_name',          default_value='full_mission'),
         DeclareLaunchArgument('enable_manipulation', default_value='false',
                               description='If true, call pick/place services at each workstation'),
+        DeclareLaunchArgument('start_rviz', default_value='true',
+                              description='If true, launch RViz with map/robot/laser config'),
         simulation,
+        odom_to_tf_node,
         delayed_navigation,
         delayed_manipulation,
+        delayed_rviz,
         delayed_mission,
     ])

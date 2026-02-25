@@ -1,3 +1,6 @@
+# slam_sim_toolbox.yaml — SLAM Toolbox for simulation (sim_slam.launch.py)
+# base_frame = base_footprint (IMPORTANT: do not use scan frame to avoid odometry issues); resolution 0.03 and min_laser_range 0.15 to better define bases/obstacles.
+
 slam_toolbox:
   ros__parameters:
 
@@ -9,37 +12,39 @@ slam_toolbox:
     ceres_dogleg_type: TRADITIONAL_DOGLEG
     ceres_loss_function: None
 
-    # ROS Parameters
+    # ROS Parameters (base_frame = scan's frame_id so it does not transform the scan)
     odom_frame: odom
     map_frame: map
-    base_frame: base_link              # <-- change to base_footprint if that's your TF
+    base_frame: base_footprint
     scan_topic: /scan
     use_map_saver: true
-    mode: mapping                      # localization
+    mode: mapping
 
     debug_logging: false
-    throttle_scans: 2
-    transform_publish_period: 0.05     # 20 Hz (lighter than 0.02)
-    map_update_interval: 5.0
+    throttle_scans: 1
+    transform_publish_period: 0.05
+    map_update_interval: 2.0
     resolution: 0.05
-    min_laser_range: 0.0
-    max_laser_range: 8.0               # <-- adjusted for indoor scenario + typical scan_filtered
-    minimum_time_interval: 0.1         # earlier 0.5 (too slow)
+    min_laser_range: 0.15
+    max_laser_range: 8.0
+    minimum_time_interval: 0.1
     transform_timeout: 0.5
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000
-    enable_interactive_mode: false     # <-- better for real robot / repeatable runs
+    enable_interactive_mode: false
 
-    # General Parameters
+    # General Parameters — low thresholds to correct pose with laser when turning
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.20      # earlier 0.5
-    minimum_travel_heading: 0.10       # earlier 0.5 rad (~28.6°) - too high
+    minimum_travel_distance: 0.20
+    minimum_travel_heading: 0.15
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
-    link_match_minimum_response_fine: 0.1
-    link_scan_maximum_distance: 1.5
+    link_match_minimum_response_fine: 0.05
+    link_scan_maximum_distance: 2.0
     loop_search_maximum_distance: 3.0
+    # Disabled sometimes, but to fix star drifting (ghosts) the ideal 
+    # is to keep it enabled so the map closes correctly.
     do_loop_closing: true
     loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 3.0
@@ -56,10 +61,9 @@ slam_toolbox:
     loop_search_space_resolution: 0.05
     loop_search_space_smear_deviation: 0.03
 
-    # Scan Matcher Parameters
+    # Scan Matcher Parameters (Ceres - if fails the map multiplies)
     distance_variance_penalty: 0.5
     angle_variance_penalty: 1.0
-
     fine_search_angle_offset: 0.00349
     coarse_search_angle_offset: 0.349
     coarse_angle_resolution: 0.0349
@@ -67,4 +71,3 @@ slam_toolbox:
     minimum_distance_penalty: 0.5
     use_response_expansion: true
     min_pass_through: 2
-    occupancy_threshold: 0.1

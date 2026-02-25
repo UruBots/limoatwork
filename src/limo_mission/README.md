@@ -118,7 +118,36 @@ Puedes crear un mapa del entorno simulado usando `slam_toolbox` (ya instalado), 
 
 > **Nota:** `cartographer_ros` no está instalado en este entorno. Usa `slam_toolbox` en su lugar.
 
-### Pasos
+### Opción recomendada: launch unificado `sim_slam.launch.py`
+
+Un solo comando levanta Gazebo, SLAM y RViz con la TF de odometría correcta (`odom_to_tf_node`):
+
+```bash
+source install/setup.bash
+ros2 launch limo_mission sim_slam.launch.py
+```
+
+En otra terminal, cuando la simulación esté lista, mueve el robot para mapear:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/cmd_vel
+```
+
+**Para evitar desfase entre Gazebo y RViz:** no muevas el robot durante los primeros **10–15 segundos** tras el arranque, para que el origen del mapa (primer scan de SLAM) coincida con el mundo de Gazebo. Luego recorre la arena con el teleop.
+
+**Comprobar alineación (con la simulación en marcha):**
+
+```bash
+# Ver pose del robot en el frame del mapa
+ros2 run tf2_ros tf2_echo map base_footprint
+
+# Ver un mensaje de odometría (frame_id debe ser "odom", child_frame_id "base_footprint")
+ros2 topic echo /odom --once
+```
+
+Si la posición en RViz no coincide con Gazebo, revisa que todos los nodos usen `use_sim_time` y que solo `odom_to_tf` publique la TF `odom → base_footprint` (en `sim_slam` el bridge no publica `/tf`).
+
+### Pasos (flujo manual en 4 terminales)
 
 **Terminal 1 — Gazebo (solo el robot, sin navegación):**
 ```bash

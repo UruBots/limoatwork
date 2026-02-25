@@ -45,6 +45,7 @@ Typical call sequence from mission_manager
 
 import json
 import os
+import subprocess
 import threading
 import time
 
@@ -220,6 +221,9 @@ class ManipulationManager(Node):
             return self._fail(response, 'Failed to close gripper.')
         time.sleep(self._timing('settle_wait'))
 
+        # 6b. [SIM] Teleport object to gripper position
+        self._teleport_object_to_gripper(target['id'])
+
         # 7. Lift to carry pose
         if not self._move_to_named_pose('carry'):
             return self._fail(response, 'Failed to reach carry pose.')
@@ -252,6 +256,9 @@ class ManipulationManager(Node):
         if not self._move_gripper('open'):
             return self._fail(response, 'Failed to open gripper for place.')
         time.sleep(self._timing('settle_wait'))
+
+        # 2b. [SIM] Teleport object to delivery zone (START = 0.3, 0.3)
+        self._teleport_object_to_ground(self._carried_object['id'], 0.3, 0.3)
 
         # 3. Retreat to home
         self._move_to_named_pose('home')
@@ -450,6 +457,68 @@ class ManipulationManager(Node):
         response.message = message
         self._publish_status(self.ERROR)
         return response
+
+    # ================================================================== #
+    #  Gazebo Object Teleportation (Simulation Only)                      #
+    # ================================================================== #
+
+    def _teleport_object_to_gripper(self, obj_id: str):
+        """
+        In simulation, "pick" the object by hiding it underground.
+        The object will reappear when placed at the delivery zone.
+        Uses ign service to call /world/<world>/set_pose.
+        """
+        if not self._use_sim:
+            return
+        try:
+            # Hide object underground (simulates being held by gripper)
+            cmd = [
+                'ign', 'service', '-s', '/world/atwork_2024/set_pose',
+                '--reqtype', 'ignition.msgs.Pose',
+                '--reptype', 'ignition.msgs.Boolean',
+                '--timeout', '2000',
+                '--req',
+                f'name: "{obj_id}", position: {{x: 0.0, y: 0.0, z: -5.0}}'
+            ]
+            result = subprocess.run(cmd, capture_output=True, timeout=5)
+            if result.returncode == 0:
+                self.get_logger().info(f'[SIM] Object {obj_id} picked (hidden).')
+            else:
+                self.get_logger().warn(f'[SIM] Failed to hide {obj_id}: {result.stderr.decode()}')
+        except Exception as e:
+            self.get_logger().warn(f'[SIM] Teleport exception: {e}')
+
+    _place_counter = 0  # Class variable to offset placed objects
+
+    def _teleport_object_to_ground(self, obj_id: str, base_x: float, base_y: float):
+        """
+        In simulation, teleport the object to the ground at delivery position.
+        Objects are placed with slight offsets to avoid stacking.
+        """
+        if not self._use_sim:
+            return
+        try:
+            # Offset each placed object slightly
+            ManipulationManager._place_counter += 1
+            offset = (ManipulationManager._place_counter - 1) * 0.1
+            x = base_x + offset
+            y = base_y
+
+            cmd = [
+                'ign', 'service', '-s', '/world/atwork_2024/set_pose',
+                '--reqtype', 'ignition.msgs.Pose',
+                '--reptype', 'ignition.msgs.Boolean',
+                '--timeout', '2000',
+                '--req',
+                f'name: "{obj_id}", position: {{x: {x}, y: {y}, z: 0.05}}'
+            ]
+            result = subprocess.run(cmd, capture_output=True, timeout=5)
+            if result.returncode == 0:
+                self.get_logger().info(f'[SIM] Placed {obj_id} at delivery zone ({x:.2f}, {y:.2f}).')
+            else:
+                self.get_logger().warn(f'[SIM] Failed to place {obj_id}: {result.stderr.decode()}')
+        except Exception as e:
+            self.get_logger().warn(f'[SIM] Place teleport exception: {e}')
 
 
 def main(args=None):

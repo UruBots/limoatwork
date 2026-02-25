@@ -3,6 +3,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
                              SetEnvironmentVariable, TimerAction)
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
@@ -44,6 +45,7 @@ def generate_launch_description():
     
     # Launch configurations
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    bridge_tf = LaunchConfiguration('bridge_tf', default='true')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('z_pose', default='0.0')
@@ -77,7 +79,7 @@ def generate_launch_description():
         }.items()
     )
 
-    # Spawn Robot
+    # Spawn Robot (use_sim_time for consistency with bridge and TF)
     spawn_entity = Node(
         package='ros_gz_sim',
         executable='create',
@@ -88,34 +90,36 @@ def generate_launch_description():
             '-y', y_pose,
             '-z', z_pose
         ],
+        parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
     )
 
-    # Bridge
+    # Bridge: topics without /tf (when bridge_tf:=false we use odom_to_tf instead for SLAM)
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
-            # Clock
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            # Lidar
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-            # IMU
             '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
-            # Cmd Vel
             '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
-            # Joint States
             '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
-            # Odometry
             '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
-            # TF
-            '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
-            # RGB Camera image (for AprilTag detection)
             '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
-            # Camera info (intrinsics, needed for pose estimation)
             '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
         ],
+        parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
+    )
+
+    # Bridge only /tf (optional; with sim_slam use bridge_tf:=false and odom_to_tf_node)
+    bridge_tf_node = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=['/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V'],
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen',
+        condition=IfCondition(bridge_tf),
     )
 
     # Single spawner activating all controllers as a group with a generous
@@ -145,6 +149,7 @@ def generate_launch_description():
         arguments=['0', '0', '0', '0', '0', '0',
                    'laser_link',
                    'limo_manipulator/base_footprint/laser_sensor'],
+        parameters=[{'use_sim_time': use_sim_time}],
         output='screen',
     )
 
@@ -160,10 +165,13 @@ def generate_launch_description():
         gz_sim_resource_path,
         gz_relax_check,
         DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('bridge_tf', default_value='true',
+                              description='Bridge /tf from Gazebo; false for sim_slam (use odom_to_tf)'),
         robot_state_publisher,
         gz_sim,
         spawn_entity,
         bridge,
+        bridge_tf_node,
         laser_frame_bridge,
         delayed_controllers,
     ])

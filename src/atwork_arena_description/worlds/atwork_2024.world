@@ -82,6 +82,77 @@
       <pose>1.85 1.20 0.05 0 0 0.30</pose>
     </include>
 
+    <!-- LiDAR-visible barrier walls around WS01 and WS02.
+         The LIMO LiDAR beam sits above the 10 cm tables so it cannot detect
+         them directly.  These thin walls (height 0.20 m) sit at the table
+         perimeter at LiDAR height so Nav2 costmaps see them as obstacles and
+         will not plan paths through the tables.
+         WS01 table: center (2.15,-0.35), size 0.5×0.8, yaw=-0.66 rad
+         Wall panels placed along the four table edges. -->
+    <!-- Barrier walls around each workstation table.
+         Purpose: the LIMO LiDAR (height ~0.15 m) cannot see 10 cm tall tables,
+         so Nav2 would plan paths through them.  Three solid walls (back + sides)
+         make the table area a LiDAR-visible obstacle.  The FRONT face is
+         visual-only (no collision) so the robot arm can reach in from the
+         approach side without hitting a barrier.
+
+         WS01 table: center (2.15,-0.35), size 0.5×0.8 m, yaw=-0.66 rad
+         Robot approaches from local +x direction (table "front"). -->
+    <model name="WS01_barrier">
+      <static>true</static>
+      <pose>2.15 -0.35 0.0 0 0 -0.66</pose>
+      <link name="link">
+        <!-- back  (local -x) — solid, LiDAR sees it -->
+        <collision name="back"><pose>-0.25  0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <!-- left  (local +y) — solid -->
+        <collision name="left"><pose> 0.0  0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <!-- right (local -y) — solid -->
+        <collision name="right"><pose> 0.0 -0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <!-- front (local +x) — visual only, arm passes through freely -->
+        <visual name="front_v"><pose> 0.25  0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.5</ambient><diffuse>1 0.5 0 0.5</diffuse></material></visual>
+        <visual name="back_v"><pose>-0.25  0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose> 0.0  0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose> 0.0 -0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- WS02 table: center (1.85,1.20), size 0.5×0.8 m, yaw=0.30 rad -->
+    <model name="WS02_barrier">
+      <static>true</static>
+      <pose>1.85 1.20 0.0 0 0 0.30</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25  0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose> 0.0  0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose> 0.0 -0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="front_v"><pose> 0.25  0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>0 0.5 1 0.5</ambient><diffuse>0 0.5 1 0.5</diffuse></material></visual>
+        <visual name="back_v"><pose>-0.25  0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>0 0 1 0.6</ambient><diffuse>0 0 1 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose> 0.0  0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>0 0 1 0.6</ambient><diffuse>0 0 1 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose> 0.0 -0.40 0.15 0 0 0</pose>
+          <geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>0 0 1 0.6</ambient><diffuse>0 0 1 0.6</diffuse></material></visual>
+      </link>
+    </model>
+
     <!-- Objects on WS01 -->
     <include>
       <name>obj_f20_1</name>
