@@ -8,7 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY models worlds materials
+install(DIRECTORY models worlds materials config
   DESTINATION share/${PROJECT_NAME}
 )
 

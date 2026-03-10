@@ -3,17 +3,18 @@ mission_2025.launch.py -- Full simulation stack for RoboCup@Work 2025 Salvador
 
 Launches:
   1. Gazebo + robot (atwork_2025 world, selectable arm)
-  2. Odometry TF bridge
-  3. Nav2 navigation stack (AMCL + planner + controller)
-  4. Manipulation stack (object_detector + manipulation_manager + mycobot)
-  5. Mission Manager 2025 (state-machine node)
-  6. RViz (optional)
+  2. Object spawner (places manipulation objects on tables per test_mode preset)
+  3. Odometry TF bridge
+  4. Nav2 navigation stack (AMCL + planner + controller)
+  5. Manipulation stack (object_detector + manipulation_manager + mycobot)
+  6. Mission Manager 2025 (state-machine node)
+  7. RViz (optional)
 
 Usage:
   ros2 launch limo_mission mission_2025.launch.py
   ros2 launch limo_mission mission_2025.launch.py arm:=mycobot
   ros2 launch limo_mission mission_2025.launch.py enable_manipulation:=true
-  ros2 launch limo_mission mission_2025.launch.py test_mode:=BMT
+  ros2 launch limo_mission mission_2025.launch.py test_mode:=BTT1 spawn_objects:=true
 """
 import os
 from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
@@ -66,6 +67,8 @@ def generate_launch_description():
     arm = LaunchConfiguration("arm")
     world = LaunchConfiguration("world")
     test_mode = LaunchConfiguration("test_mode")
+    spawn_objects = LaunchConfiguration("spawn_objects")
+    spawn_preset = LaunchConfiguration("spawn_preset")
 
     # 1. Gazebo + robot (2025 world, selectable arm)
     simulation = IncludeLaunchDescription(
@@ -78,7 +81,22 @@ def generate_launch_description():
         }.items(),
     )
 
-    # 1.5 Odometry TF bridge
+    # 1.5 Object spawner (places manipulation objects on tables)
+    object_spawner = Node(
+        condition=IfCondition(spawn_objects),
+        package="limo_mission",
+        executable="object_spawner",
+        name="object_spawner",
+        output="screen",
+        parameters=[{
+            "use_sim_time": use_sim_time,
+            "preset": spawn_preset,
+            "world_name": "atwork_2025_world",
+            "spawn_delay": 15.0,
+        }],
+    )
+
+    # 1.6 Odometry TF bridge
     odom_to_tf = Node(
         package="limo_mission",
         executable="odom_to_tf_node",
@@ -180,9 +198,9 @@ def generate_launch_description():
                               description="Launch RViz visualization"),
         DeclareLaunchArgument("task_yaml", default_value="",
                               description="Path to task definition YAML (empty = default patrol)"),
-        DeclareLaunchArgument("arm", default_value="open_manipulator",
+        DeclareLaunchArgument("arm", default_value="none",
                               choices=["open_manipulator", "mycobot", "none"],
-                              description="Arm to mount on the LIMO"),
+                              description="Arm to mount on the LIMO (requires open_manipulator_x_description or mycobot_description unless 'none')"),
         DeclareLaunchArgument("world", default_value="atwork_2025.world",
                               description="World file from atwork_arena_description/worlds/"),
         DeclareLaunchArgument("map", default_value=os.path.join(
@@ -190,7 +208,12 @@ def generate_launch_description():
                               description="Path to Nav2 map YAML file"),
         DeclareLaunchArgument("test_mode", default_value="",
                               description="Competition test: BMT, BTT1, BTT2, ATT1, ATT2, FINAL"),
+        DeclareLaunchArgument("spawn_objects", default_value="true",
+                              description="Spawn manipulation objects on tables"),
+        DeclareLaunchArgument("spawn_preset", default_value="BTT1",
+                              description="Object spawn preset: BMT, BTT1, BTT2, ATT1, ATT2, FINAL"),
         simulation,
+        object_spawner,
         odom_to_tf,
         delayed_nav,
         delayed_rviz,

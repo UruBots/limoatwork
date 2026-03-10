@@ -1,0 +1,117 @@
+# RoboCup@Work 2025 - Object spawn presets for simulation
+#
+# Table positions (from atwork_2025.world):
+#   WS01: (-2.0, 1.0)  10cm    WS09: (2.0, 1.0)   15cm
+#   WS02: (-0.5, 1.5)  10cm    WS10: (1.0, -1.5)   0cm
+#   WS03: (-1.5, 0.0)   5cm    WS11: (2.2, -1.2)  10cm
+#   WS04: (-2.5, -2.0) 15cm    WS12: (3.5, -2.5)  15cm
+#   WS05: (-1.0, -2.2)  0cm    WS13: (2.5, 0.2)    5cm
+#   WS06: (-0.5, -1.0) 10cm    WS14: (3.5, 3.0)   10cm
+#   WS07: (0.0, 0.5)    5cm    WS15: (-3.5, 1.0)  10cm
+#   WS08: (1.0, 1.0)   10cm    WS16: (4.0, -3.0)  15cm
+#
+# Table surface = table_height (0/5/10/15 cm).
+# Object Z = table_surface + drop_margin (objects fall via gravity).
+#
+# Available object types (from atwork_arena_description/models/):
+#   attc_cube     - 42mm AprilTag cube (50g)
+#   f20_20        - Small aluminium profile 20x20x100mm (49g)
+#   s40_40        - Large aluminium profile 40x40x100mm (186g)
+#   m20_100       - Screw M20x100 (296g)
+#   nut_m20       - Small nut M20 (56g)
+#   nut_m30       - Large nut M30 (217g)
+#   container_red - Red container 160x135x82mm
+#   container_blue- Blue container 160x135x82mm
+
+# Table center positions and surface heights (extracted from world file)
+tables:
+  WS01:  {x: -2.0, y:  1.0, z_surface: 0.10}
+  WS02:  {x: -0.5, y:  1.5, z_surface: 0.10}
+  WS03:  {x: -1.5, y:  0.0, z_surface: 0.05}
+  WS04:  {x: -2.5, y: -2.0, z_surface: 0.15}
+  WS05:  {x: -1.0, y: -2.2, z_surface: 0.00}
+  WS06:  {x: -0.5, y: -1.0, z_surface: 0.10}
+  WS07:  {x:  0.0, y:  0.5, z_surface: 0.05}
+  WS08:  {x:  1.0, y:  1.0, z_surface: 0.10}
+  WS09:  {x:  2.0, y:  1.0, z_surface: 0.15}
+  WS10:  {x:  1.0, y: -1.5, z_surface: 0.00}
+  WS11:  {x:  2.2, y: -1.2, z_surface: 0.10}
+  WS12:  {x:  3.5, y: -2.5, z_surface: 0.15}
+  WS13:  {x:  2.5, y:  0.2, z_surface: 0.05}
+  WS14:  {x:  3.5, y:  3.0, z_surface: 0.10}
+  WS15:  {x: -3.5, y:  1.0, z_surface: 0.10}
+  WS16:  {x:  4.0, y: -3.0, z_surface: 0.15}
+
+# Drop height above table surface (objects fall via gravity)
+drop_height: 0.05
+
+# ──────────────────────────────────────────────────────────────
+# Presets: each defines a list of objects to spawn.
+#   table:    service area name (used to look up table position)
+#   type:     model name from atwork_arena_description/models/
+#   dx, dy:   offset from table center (meters)
+# ──────────────────────────────────────────────────────────────
+
+presets:
+  BTT1:
+    description: "Basic Transportation Test 1 -- 4 objects, 3 WS (10cm tables)"
+    objects:
+      - {name: attc_01, type: attc_cube,  table: WS01, dx:  0.05, dy:  0.0}
+      - {name: f20_01,  type: f20_20,     table: WS01, dx: -0.05, dy:  0.0}
+      - {name: nut_01,  type: nut_m20,    table: WS02, dx:  0.0,  dy:  0.05}
+      - {name: m20_01,  type: m20_100,    table: WS08, dx:  0.0,  dy:  0.0}
+
+  BTT2:
+    description: "Basic Transportation Test 2 -- 5 objects, 4 WS (multi-height)"
+    objects:
+      - {name: attc_01, type: attc_cube,  table: WS01, dx:  0.05, dy:  0.0}
+      - {name: f20_01,  type: f20_20,     table: WS03, dx:  0.0,  dy:  0.05}
+      - {name: s40_01,  type: s40_40,     table: WS04, dx:  0.0,  dy:  0.0}
+      - {name: nut_01,  type: nut_m30,    table: WS09, dx:  0.05, dy:  0.0}
+      - {name: m20_01,  type: m20_100,    table: WS06, dx:  0.0,  dy:  0.0}
+
+  ATT1:
+    description: "Advanced Transportation Test 1 -- 6 objects, 5 WS, includes shelf"
+    objects:
+      - {name: attc_01, type: attc_cube,  table: WS01, dx:  0.05, dy:  0.0}
+      - {name: attc_02, type: attc_cube,  table: WS02, dx: -0.05, dy:  0.0}
+      - {name: f20_01,  type: f20_20,     table: WS07, dx:  0.0,  dy:  0.0}
+      - {name: s40_01,  type: s40_40,     table: WS04, dx:  0.0,  dy:  0.0}
+      - {name: nut_01,  type: nut_m20,    table: WS11, dx:  0.0,  dy:  0.05}
+      - {name: m20_01,  type: m20_100,    table: WS13, dx:  0.0,  dy:  0.0}
+
+  ATT2:
+    description: "Advanced Transportation Test 2 -- 7 objects + containers"
+    objects:
+      - {name: attc_01, type: attc_cube,  table: WS01, dx:  0.05, dy:  0.0}
+      - {name: attc_02, type: attc_cube,  table: WS08, dx: -0.05, dy:  0.0}
+      - {name: f20_01,  type: f20_20,     table: WS03, dx:  0.0,  dy:  0.05}
+      - {name: s40_01,  type: s40_40,     table: WS12, dx:  0.0,  dy:  0.0}
+      - {name: nut_01,  type: nut_m20,    table: WS06, dx:  0.0,  dy:  0.0}
+      - {name: nut_02,  type: nut_m30,    table: WS09, dx:  0.05, dy:  0.0}
+      - {name: m20_01,  type: m20_100,    table: WS11, dx:  0.0,  dy:  0.0}
+      - {name: cont_r,  type: container_red,  table: WS14, dx: 0.0, dy: -0.05}
+      - {name: cont_b,  type: container_blue, table: WS14, dx: 0.0, dy:  0.05}
+
+  FINAL:
+    description: "Final Run -- 10 objects + containers across arena"
+    objects:
+      - {name: attc_01, type: attc_cube,  table: WS01, dx:  0.05, dy:  0.0}
+      - {name: attc_02, type: attc_cube,  table: WS08, dx:  0.0,  dy:  0.0}
+      - {name: attc_03, type: attc_cube,  table: WS15, dx:  0.0,  dy:  0.0}
+      - {name: f20_01,  type: f20_20,     table: WS03, dx:  0.0,  dy:  0.0}
+      - {name: f20_02,  type: f20_20,     table: WS13, dx:  0.0,  dy:  0.05}
+      - {name: s40_01,  type: s40_40,     table: WS04, dx:  0.0,  dy:  0.0}
+      - {name: s40_02,  type: s40_40,     table: WS12, dx:  0.0,  dy:  0.0}
+      - {name: nut_01,  type: nut_m20,    table: WS06, dx:  0.0,  dy:  0.0}
+      - {name: nut_02,  type: nut_m30,    table: WS09, dx:  0.0,  dy:  0.0}
+      - {name: m20_01,  type: m20_100,    table: WS11, dx:  0.0,  dy:  0.0}
+      - {name: cont_r,  type: container_red,  table: WS14, dx: 0.0, dy: -0.05}
+      - {name: cont_b,  type: container_blue, table: WS14, dx: 0.0, dy:  0.05}
+
+  BMT:
+    description: "Basic Manipulation Test -- 3 objects, 2 WS"
+    objects:
+      - {name: attc_01, type: attc_cube,  table: WS01, dx:  0.05, dy:  0.0}
+      - {name: f20_01,  type: f20_20,     table: WS01, dx: -0.05, dy:  0.0}
+      - {name: nut_01,  type: nut_m20,    table: WS01, dx:  0.0,  dy:  0.08}

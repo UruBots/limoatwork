@@ -158,8 +158,35 @@ ros2 launch limo_mission mission_2025.launch.py \
 | `map` | `limo_bringup/maps/map.yaml` | path to `.yaml` | Saved map for Nav2 |
 | `enable_manipulation` | `false` | `true`/`false` | Enable dual-arm pick/place stack |
 | `test_mode` | `""` | `BMT`, `BTT1`, `BTT2`, `ATT1`, `ATT2`, `FINAL` | Competition test mode |
+| `spawn_objects` | `true` | `true`/`false` | Spawn manipulation objects on tables |
+| `spawn_preset` | `BTT1` | `BMT`, `BTT1`, `BTT2`, `ATT1`, `ATT2`, `FINAL` | Object spawn preset (see below) |
 | `start_rviz` | `true` | `true`/`false` | Open RViz visualisation |
 | `task_yaml` | `""` | path to `.yaml` | Custom task definition file |
+
+#### Object spawn presets
+
+The simulation can automatically place manipulation objects (cubes, profiles, screws, nuts, containers) on the arena tables. Presets are defined in `src/atwork_arena_description/config/object_spawns.yaml`.
+
+| Preset | Description | Objects |
+|--------|-------------|---------|
+| `BMT` | Basic Manipulation Test | 3 objects on 1 table |
+| `BTT1` | Basic Transportation Test 1 | 4 objects on 3 tables (10cm) |
+| `BTT2` | Basic Transportation Test 2 | 5 objects on 4 tables (multi-height) |
+| `ATT1` | Advanced Transportation Test 1 | 6 objects on 5 tables |
+| `ATT2` | Advanced Transportation Test 2 | 7 objects + 2 containers |
+| `FINAL` | Full final run | 10 objects + 2 containers across arena |
+
+Objects are placed at table-center + configurable offset and dropped from a small height so they settle via gravity. To create custom presets, add a new entry to the YAML file.
+
+```bash
+# Spawn objects independently (Gazebo must be running)
+ros2 launch limo_mission spawn_objects.launch.py preset:=ATT1
+
+# Or via the full stack
+ros2 launch limo_mission mission_2025.launch.py \
+  map:=$HOME/Desarrollo/limoatwork/sim.yaml \
+  spawn_preset:=FINAL
+```
 
 #### Startup sequence
 
@@ -167,7 +194,8 @@ When `mission_2025.launch.py` runs, components start in this order:
 
 | Time | Component |
 |------|-----------|
-| t=0s | Gazebo Sim + robot + ros_gz bridges + odom_to_tf |
+| t=0s | Gazebo Sim + robot + ros_gz bridges + odom_to_tf + object_spawner |
+| t=15s | Object spawner places objects on tables |
 | t=20s | Nav2 (AMCL + planner + controller) |
 | t=25s | RViz |
 | t=35s | ros2_control arm controllers |
@@ -272,7 +300,7 @@ Si prefieres levantar cada componente por separado:
 |---------|-------------|
 | [`limo_manipulator_description`](./src/limo_manipulator_description) | Unified URDF with selectable arm (`open_manipulator` / `mycobot` / `none`) and `ros2_control` configs |
 | [`limo_manipulator_bringup`](./src/limo_manipulator_bringup) | Gazebo Sim launcher, ros_gz bridges, controller spawning |
-| [`atwork_arena_description`](./src/atwork_arena_description) | RoboCup @Work 2024/2025 arena worlds and models |
+| [`atwork_arena_description`](./src/atwork_arena_description) | RoboCup @Work 2024/2025 arena worlds, models, and object spawn presets |
 | [`limo_mission`](./src/limo_mission) | Mission manager 2025 (state machine with debug overlay), Nav2 integration, SLAM launch files |
 | [`limo_manipulation`](./src/limo_manipulation) | Pick-and-place managers for both arms, object detection, MoveIt2 configs for MyCobot 280 |
 | [`limo_mission_msgs`](./src/limo_mission_msgs) | Custom ROS 2 messages and actions |

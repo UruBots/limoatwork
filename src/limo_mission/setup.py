@@ -34,6 +34,7 @@ setup(
             'pick_and_return_example = limo_mission.pick_and_return_example:main',
             'odom_to_tf_node = limo_mission.odom_to_tf_node:main',
             'mission_manager_2025 = limo_mission.mission_manager_2025:main',
+            'object_spawner = limo_mission.object_spawner:main',
         ],
     },
 )
