@@ -153,7 +153,7 @@ ros2 launch limo_mission mission_2025.launch.py \
 
 | Argument | Default | Options | Description |
 |----------|---------|---------|-------------|
-| `arm` | `open_manipulator` | `open_manipulator`, `mycobot`, `none` | Arm to mount on the LIMO chassis |
+| `arm` | `mycobot` | `open_manipulator`, `mycobot`, `none` | Arm to mount on the LIMO chassis |
 | `world` | `atwork_2025.world` | any `.world` file | Gazebo world file |
 | `map` | `limo_bringup/maps/map.yaml` | path to `.yaml` | Saved map for Nav2 |
 | `enable_manipulation` | `false` | `true`/`false` | Enable dual-arm pick/place stack |
@@ -187,6 +187,25 @@ ros2 launch limo_manipulator_bringup simulation.launch.py arm:=mycobot
 
 # No arm (mobile base only)
 ros2 launch limo_manipulator_bringup simulation.launch.py arm:=none
+```
+
+#### Debug & monitoring
+
+The mission manager publishes a real-time debug overlay on `/mission/debug_image` (960x560 BGR8, 2 Hz). It shows state-machine state, elapsed time, current step and target, full task list with status, inventory, tape detection, estimated score, and a top-down arena mini-map with the robot position and planned route.
+
+```bash
+# View during simulation
+ros2 run rqt_image_view rqt_image_view /mission/debug_image
+```
+
+MoveIt2 is available for MyCobot 280 Cartesian planning:
+
+```bash
+# Launch manipulation with MoveIt2
+ros2 launch limo_manipulation manipulation.launch.py arm:=mycobot use_moveit:=true
+
+# With RViz motion planning plugin
+ros2 launch limo_manipulation manipulation.launch.py arm:=mycobot use_moveit:=true start_rviz:=true
 ```
 
 #### Useful commands during simulation
@@ -254,8 +273,9 @@ Si prefieres levantar cada componente por separado:
 | [`limo_manipulator_description`](./src/limo_manipulator_description) | Unified URDF with selectable arm (`open_manipulator` / `mycobot` / `none`) and `ros2_control` configs |
 | [`limo_manipulator_bringup`](./src/limo_manipulator_bringup) | Gazebo Sim launcher, ros_gz bridges, controller spawning |
 | [`atwork_arena_description`](./src/atwork_arena_description) | RoboCup @Work 2024/2025 arena worlds and models |
-| [`limo_mission`](./src/limo_mission) | Mission manager (state machine), Nav2 integration, SLAM launch files |
-| [`limo_manipulation`](./src/limo_manipulation) | Pick-and-place managers for both arms, object detection |
+| [`limo_mission`](./src/limo_mission) | Mission manager 2025 (state machine with debug overlay), Nav2 integration, SLAM launch files |
+| [`limo_manipulation`](./src/limo_manipulation) | Pick-and-place managers for both arms, object detection, MoveIt2 configs for MyCobot 280 |
 | [`limo_mission_msgs`](./src/limo_mission_msgs) | Custom ROS 2 messages and actions |
+| [`mycobot_ros2`](./src/mycobot_ros2) | Elephant Robotics MyCobot ROS 2 drivers, URDF, and MoveIt2 configs (vendored) |
 
 > **Simulator**: This project uses **Gazebo Sim** (new generation, `gz-sim`) via the `ros_gz` packages. Classic Gazebo 11 (`gazebo_ros`) is **not** used.

@@ -514,6 +514,18 @@ class MissionManager2025(Node):
         self.current_detections: List[DetectedObject] = []
         self.target_object: Optional[DetectedObject] = None
 
+        # ── Debug image overlay ──
+        self._mission_start_time: Optional[float] = None
+        self._debug_tf_buffer: Optional[tf2_ros.Buffer] = None
+        if _CV2_AVAILABLE:
+            self.debug_image_pub = self.create_publisher(Image, "/mission/debug_image", 5)
+            self._debug_bridge = CvBridge()
+            self._debug_tf_buffer = tf2_ros.Buffer()
+            tf2_ros.TransformListener(self._debug_tf_buffer, self)
+            self.create_timer(0.5, self._publish_debug_image, callback_group=self.cb_group)
+        else:
+            self.debug_image_pub = None
+
         # ── Start ──
         self.start_timer = self.create_timer(
             1.0, self._on_start, callback_group=self.cb_group)
@@ -738,6 +750,7 @@ class MissionManager2025(Node):
             self.sm.transition(MissionState.FINISHED)
             return
 
+        self._mission_start_time = time.time()
         self._info("Initialization complete.")
         self.sm.transition(MissionState.WAITING_FOR_TASK)
 
@@ -1675,6 +1688,267 @@ class MissionManager2025(Node):
             time.sleep(period)
 
         return False
+
+
+    # ═══════════════════════════════════════════════════════════════════
+    #  Debug image overlay
+    # ═══════════════════════════════════════════════════════════════════
+
+    _STATE_COLORS = {
+        MissionState.IDLE:               (120, 120, 120),
+        MissionState.INITIALIZING:       (255, 200, 50),
+        MissionState.WAITING_FOR_TASK:   (255, 200, 50),
+        MissionState.PLANNING:           (255, 180, 0),
+        MissionState.NAVIGATING:         (0, 200, 255),
+        MissionState.APPROACHING:        (0, 255, 200),
+        MissionState.PERCEIVING:         (200, 100, 255),
+        MissionState.PICKING:            (50, 255, 50),
+        MissionState.PLACING:            (50, 200, 50),
+        MissionState.UNDOCKING:          (100, 180, 255),
+        MissionState.TAPE_DETECTED:      (0, 0, 255),
+        MissionState.REPLANNING:         (0, 140, 255),
+        MissionState.NAVIGATING_TO_FINISH: (255, 255, 0),
+        MissionState.FINISHED:           (0, 255, 0),
+        MissionState.ERROR_RECOVERY:     (0, 50, 255),
+    }
+
+    def _publish_debug_image(self):
+        if not _CV2_AVAILABLE or self.debug_image_pub is None:
+            return
+        try:
+            img = self._render_debug_image()
+            msg = self._debug_bridge.cv2_to_imgmsg(img, encoding="bgr8")
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.header.frame_id = "map"
+            self.debug_image_pub.publish(msg)
+        except Exception:
+            pass
+
+    def _render_debug_image(self) -> 'np.ndarray':
+        W, H = 960, 560
+        img = np.zeros((H, W, 3), dtype=np.uint8)
+        img[:] = (30, 30, 30)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        f_sm, f_md, f_lg = 0.40, 0.50, 0.65
+        white = (255, 255, 255)
+        gray = (160, 160, 160)
+        cyan = (255, 220, 0)
+        green = (0, 220, 0)
+        red = (80, 80, 255)
+        yellow = (0, 230, 255)
+
+        INFO_W = 600
+        MAP_X = INFO_W + 20
+
+        # -- Header --
+        state = self.sm.state
+        state_color = self._STATE_COLORS.get(state, white)
+        cv2.putText(img, "MISSION DEBUG", (15, 28), font, f_lg, cyan, 2)
+        test_mode = self.get_parameter("test_mode").value.upper() or "—"
+        cv2.putText(img, f"Test: {test_mode}", (250, 28), font, f_md, gray, 1)
+
+        # -- State --
+        cv2.putText(img, "State:", (15, 58), font, f_md, gray, 1)
+        cv2.putText(img, state.name, (80, 58), font, f_md, state_color, 2)
+
+        # -- Elapsed time --
+        if self._mission_start_time:
+            elapsed = time.time() - self._mission_start_time
+            spec = self._get_test_mode_spec()
+            total = spec["run_time_sec"] if spec else 0
+            time_str = f"{int(elapsed)}s"
+            if total > 0:
+                time_str += f" / {total}s"
+                ratio = elapsed / total
+                if ratio > 0.9:
+                    time_color = red
+                elif ratio > 0.7:
+                    time_color = yellow
+                else:
+                    time_color = green
+            else:
+                time_color = white
+            cv2.putText(img, f"Time: {time_str}", (350, 58), font, f_md, time_color, 1)
+
+        # -- Current step --
+        y = 90
+        plan_len = len(self.visit_plan)
+        idx = self.plan_idx
+        if plan_len > 0:
+            cv2.putText(img, f"Step: {idx+1}/{plan_len}", (15, y), font, f_md, white, 1)
+            if idx < plan_len:
+                sa_name, action = self.visit_plan[idx]
+                sa = self.service_areas.get(sa_name)
+                action_color = green if action == "pick" else yellow
+                cv2.putText(img, f"Target: {sa_name} ({action})",
+                            (170, y), font, f_md, action_color, 1)
+                if sa:
+                    cv2.putText(img, f"  x={sa.x:.1f} y={sa.y:.1f} h={sa.table_height_cm}cm",
+                                (15, y + 22), font, f_sm, gray, 1)
+        else:
+            cv2.putText(img, "Step: no plan", (15, y), font, f_md, gray, 1)
+
+        # -- Separator --
+        y = 135
+        cv2.line(img, (15, y), (INFO_W - 15, y), (60, 60, 60), 1)
+
+        # -- Tasks --
+        y = 155
+        cv2.putText(img, "Tasks:", (15, y), font, f_md, cyan, 1)
+        task_status_colors = {
+            "pending": gray, "picked": yellow, "delivered": green, "failed": red
+        }
+        max_tasks_shown = 12
+        for i, t in enumerate(self.tasks[:max_tasks_shown]):
+            y += 20
+            sc = task_status_colors.get(t.status, gray)
+            status_icon = {"pending": ".", "picked": "+", "delivered": "v", "failed": "x"
+                           }.get(t.status, "?")
+            line = f"  [{status_icon}] #{t.task_id} {t.object_name}: {t.source} -> {t.destination}"
+            cv2.putText(img, line, (15, y), font, f_sm, sc, 1)
+        if len(self.tasks) > max_tasks_shown:
+            y += 20
+            cv2.putText(img, f"  ... +{len(self.tasks) - max_tasks_shown} more",
+                        (15, y), font, f_sm, gray, 1)
+
+        # -- Inventory --
+        y += 30
+        inv_color = yellow if self.inventory else gray
+        cv2.putText(img, f"Inventory: {len(self.inventory)}/{self.MAX_INVENTORY}",
+                    (15, y), font, f_md, inv_color, 1)
+        for t in self.inventory:
+            y += 18
+            cv2.putText(img, f"  - {t.object_name} (-> {t.destination})",
+                        (15, y), font, f_sm, yellow, 1)
+
+        # -- Tape detection --
+        y += 28
+        tape = self._tape_type
+        intensity = self._tape_intensity
+        tape_colors = {
+            TapeType.NONE: gray, TapeType.GREEN: (0, 200, 0),
+            TapeType.RED_WHITE: (0, 0, 255), TapeType.YELLOW_BLACK: (0, 200, 255)
+        }
+        tc = tape_colors.get(tape, gray)
+        cv2.putText(img, f"Tape: {tape.value} ({intensity:.3f})",
+                    (15, y), font, f_md, tc, 1)
+
+        # -- Detections --
+        y += 22
+        n_det = len(self.current_detections)
+        cv2.putText(img, f"Detections: {n_det}", (15, y), font, f_md,
+                    green if n_det > 0 else gray, 1)
+        if self.target_object:
+            cv2.putText(img, f"  target: {self.target_object.obj_id} ({self.target_object.obj_type})",
+                        (180, y), font, f_sm, green, 1)
+
+        # -- Score --
+        y += 22
+        score = self._estimate_score()
+        cv2.putText(img, f"Est. score: {score}", (15, y), font, f_md, cyan, 1)
+
+        # -- Nav attempt / dock attempt --
+        y += 22
+        cv2.putText(img, f"Nav retry: {self._nav_attempt}  Dock retry: {self._dock_attempt}",
+                    (15, y), font, f_sm, gray, 1)
+
+        # -- Mini arena map --
+        self._draw_minimap(img, MAP_X, 30, W - MAP_X - 15, H - 45)
+
+        return img
+
+    def _draw_minimap(self, img: 'np.ndarray', ox: int, oy: int, mw: int, mh: int):
+        """Draw a top-down arena mini-map with service areas and robot position."""
+        # Arena bounds: x in [-5, 5], y in [-3.75, 3.75]
+        ax_min, ax_max = -5.5, 5.5
+        ay_min, ay_max = -4.25, 4.25
+        a_w = ax_max - ax_min
+        a_h = ay_max - ay_min
+
+        def to_px(wx: float, wy: float) -> Tuple[int, int]:
+            px = ox + int((wx - ax_min) / a_w * mw)
+            py = oy + int((ay_max - wy) / a_h * mh)
+            return px, py
+
+        # Background
+        cv2.rectangle(img, (ox, oy), (ox + mw, oy + mh), (45, 45, 45), -1)
+        cv2.rectangle(img, (ox, oy), (ox + mw, oy + mh), (80, 80, 80), 1)
+
+        # Arena border
+        tl = to_px(-5.0, 3.75)
+        br = to_px(5.0, -3.75)
+        cv2.rectangle(img, tl, br, (100, 100, 100), 1)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        f_tiny = 0.30
+        f_small = 0.35
+
+        sa_colors = {
+            ServiceAreaType.WS: (200, 200, 200),
+            ServiceAreaType.SH: (200, 150, 50),
+            ServiceAreaType.RT: (200, 50, 200),
+            ServiceAreaType.PP: (50, 200, 200),
+            ServiceAreaType.START: (0, 200, 0),
+            ServiceAreaType.FINISH: (0, 255, 0),
+        }
+
+        current_sa_name = self.current_sa
+        current_target_sa = None
+        if self.plan_idx < len(self.visit_plan):
+            current_target_sa = self.visit_plan[self.plan_idx][0]
+
+        for name, sa in self.service_areas.items():
+            px, py = to_px(sa.x, sa.y)
+            color = sa_colors.get(sa.sa_type, (150, 150, 150))
+            radius = 5
+
+            if name == current_target_sa:
+                cv2.circle(img, (px, py), radius + 5, (0, 255, 255), 1)
+            if name == current_sa_name:
+                cv2.circle(img, (px, py), radius + 3, (0, 200, 255), 2)
+
+            cv2.circle(img, (px, py), radius, color, -1)
+            cv2.putText(img, name, (px + 7, py + 3), font, f_tiny, color, 1)
+
+        # Draw visit plan route (faded)
+        if len(self.visit_plan) > 1:
+            for i in range(len(self.visit_plan) - 1):
+                sa1 = self.service_areas.get(self.visit_plan[i][0])
+                sa2 = self.service_areas.get(self.visit_plan[i + 1][0])
+                if sa1 and sa2:
+                    p1 = to_px(sa1.x, sa1.y)
+                    p2 = to_px(sa2.x, sa2.y)
+                    line_color = (60, 60, 60) if i < self.plan_idx else (80, 120, 80)
+                    cv2.line(img, p1, p2, line_color, 1)
+
+        # Robot position from TF
+        if self._debug_tf_buffer is not None:
+            try:
+                t = self._debug_tf_buffer.lookup_transform(
+                    "map", "base_link", rclpy.time.Time())
+                rx = t.transform.translation.x
+                ry = t.transform.translation.y
+                q = t.transform.rotation
+                robot_yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
+                                       1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+
+                rpx, rpy = to_px(rx, ry)
+
+                # Draw heading arrow
+                arrow_len = 12
+                dx = int(arrow_len * math.cos(-robot_yaw))
+                dy = int(arrow_len * math.sin(-robot_yaw))
+                cv2.arrowedLine(img, (rpx, rpy), (rpx + dx, rpy + dy),
+                                (0, 255, 255), 2, tipLength=0.4)
+                cv2.circle(img, (rpx, rpy), 4, (0, 255, 255), -1)
+
+                cv2.putText(img, f"({rx:.1f},{ry:.1f})",
+                            (rpx + 8, rpy - 6), font, f_small, (0, 255, 255), 1)
+            except Exception:
+                pass
+
+        cv2.putText(img, "ARENA", (ox + 5, oy + 14), font, f_small, (100, 100, 100), 1)
 
 
 # ═══════════════════════════════════════════════════════════════════════
