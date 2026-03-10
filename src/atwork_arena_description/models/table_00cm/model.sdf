@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="table_00cm">
+    <static>true</static>
+    <link name="link">
+      <!-- 0cm table: floor-level surface per rulebook sec 3.2.5.
+           Represented as a thin 1cm sheet with white surface. -->
+      <collision name="collision">
+        <pose>0 0 0.005 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.5 0.8 0.01</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <pose>0 0 0.005 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.5 0.8 0.01</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

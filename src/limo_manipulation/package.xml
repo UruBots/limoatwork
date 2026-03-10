@@ -4,10 +4,11 @@
   <name>limo_manipulation</name>
   <version>0.1.0</version>
   <description>
-    Manipulation stack for LIMO + OpenManipulator-X (RoboCup @Work).
-    Provides pick-and-place in both Gazebo simulation and real robot.
-    Uses direct JointTrajectoryController for arm control and a pluggable
-    object detector (mock in sim, RealSense-based on real robot).
+    Manipulation stack for LIMO + OpenManipulator-X + MyCobot 280
+    (RoboCup @Work).  Provides pick-and-place in both Gazebo simulation
+    and real robot.  OpenManipulator-X uses ros2_control
+    JointTrajectoryController.  MyCobot 280 supports both ros2_control
+    and direct pymycobot serial control.
   </description>
   <maintainer email="team@urubots.com">UruBots</maintainer>
   <license>Apache-2.0</license>
@@ -28,7 +29,11 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>moveit_msgs</depend>
   <depend>moveit_ros_planning_interface</depend>
-  <depend>open_manipulator_moveit_config</depend>
+  <exec_depend>xacro</exec_depend>
+
+  <!-- MyCobot 280 support -->
+  <exec_depend>mycobot_description</exec_depend>
+  <exec_depend>mycobot_communication</exec_depend>
 
   <!-- AprilTag detection -->
   <depend>apriltag_msgs</depend>

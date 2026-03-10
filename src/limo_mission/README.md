@@ -1,491 +1,754 @@
-# Package: limo_mission
+# limo_mission
 
-Este paquete gestiona la ejecución de misiones para el robot Limo en escenarios de RoboCup @Work 2024.
+Paquete de orquestacion de misiones para el robot LIMO en competencias RoboCup @Work.
+Soporta navegacion autonoma con Nav2, docking LiDAR, reconocimiento de objetos por
+AprilTag/HSV, manipulacion dual-arm (OpenManipulator-X + MyCobot), y deteccion de
+cintas reglamentarias por camara.
 
-## Componentes Principales
+**Competencia objetivo:** RoboCup@Work World Cup 2025 — Salvador, Brasil
 
-### 1. Mission Manager (`mission_manager.py`)
-Es el orquestador principal de alto nivel. Se encarga de:
-- **Cargar la configuración**: Lee los waypoints y las rutas desde archivos YAML (`waypoints.yaml`).
-- **Navegación**: Utiliza Nav2 para mover el robot entre estaciones de trabajo (Workstations).
-- **Docking de precisión**: Una vez que Nav2 llega cerca de una estación, este nodo toma el control para realizar un alineamiento fino usando el LiDAR.
-  - Se alinea con la cara de la mesa.
-  - Se aproxima a una distancia específica (ej. 5cm) para permitir la manipulación.
-- **Ciclo de Misión**: Automatiza la secuencia: *Navegación -> Docking -> Tarea de Manipulación (pendiente integrar) -> Undock (BackUp) -> Siguiente WP*.
+**Branch:** `robocup-sim`
 
-### 2. Mission WorkStation (`mission_ws.py`)
-Un script más enfocado en la ejecución directa y pruebas de integración:
-- **Diccionario de Poses**: Contiene las coordenadas exactas (`x, y, z, orientation`) de todas las estaciones de trabajo del entorno real/simulado (WS01-WS14, RT01, SH01, PP01).
-- **Parser de RoboCup**: Incluye lógica para leer archivos `.bag` generados por el *Atwork Commander*, decodificando qué objetos deben transportarse de qué origen a qué destino.
-- **Control Lateral**: Implementa un controlador lateral que usa el LiDAR (ángulo de 90°) para desplazarse paralelamente a las mesas.
+---
 
-### 3. Dock Server (`dock_server.py`)
-Proporciona una interfaz de servidor para que otros nodos soliciten operaciones de docking o aproximación de forma asíncrona.
+## Tabla de Contenidos
 
-## Flujo de Trabajo Típico
-1. El robot comienza en la zona de **START**.
-2. Recibe una lista de tareas (Source WS -> Target WS -> Object ID).
-3. Se desplaza a la **Source WS**.
-4. Realiza el **Docking** para quedar perfectamente paralelo a la mesa.
-5. El brazo (OpenManipulator-X) identifica el objeto (usa mallas del Rulebook 2024) y lo sujeta.
-6. El robot realiza un **BackUp** (undock) y se desplaza a la **Target WS**.
-7. Repite el docking y deposita el objeto.
-8. Repite hasta llegar a la zona de **FINISH**.
+- [Arquitectura General](#arquitectura-general)
+- [Nodos Principales](#nodos-principales)
+  - [Mission Manager 2025](#mission-manager-2025-mission_manager_2025py)
+  - [Mission Manager (legacy)](#mission-manager-legacy-mission_managerpy)
+  - [Mission WorkStation](#mission-workstation-mission_wspy)
+  - [Dock Server](#dock-server-dock_serverpy)
+  - [Odom to TF](#odom-to-tf-odom_to_tf_nodepy)
+- [Maquina de Estados (2025)](#maquina-de-estados-2025)
+- [Deteccion de Objetos](#deteccion-de-objetos)
+  - [Sets de Objetos](#sets-de-objetos)
+  - [Pipeline de Deteccion](#pipeline-de-deteccion)
+  - [AprilTag](#apriltag)
+- [Manipulacion Dual-Arm](#manipulacion-dual-arm)
+  - [OpenManipulator-X (Dynamixel)](#openmanipulator-x-dynamixel)
+  - [MyCobot](#mycobot)
+  - [Estrategia de Seleccion de Brazo](#estrategia-de-seleccion-de-brazo)
+- [Deteccion de Cintas](#deteccion-de-cintas)
+- [Navegacion (Nav2)](#navegacion-nav2)
+  - [Costmaps](#costmaps)
+  - [Docking LiDAR](#docking-lidar)
+- [Archivos de Configuracion](#archivos-de-configuracion)
+- [Launch Files](#launch-files)
+- [Instrucciones de Uso](#instrucciones-de-uso)
+  - [Compilar](#compilar)
+  - [Mision 2025 (Simulacion)](#mision-2025-simulacion)
+  - [Mision Legacy (Simulacion)](#mision-legacy-simulacion)
+  - [SLAM (Mapeo)](#slam-mapeo)
+  - [Robot Real](#robot-real)
+- [Parametros del Mission Manager 2025](#parametros-del-mission-manager-2025)
+- [Servicios y Topics](#servicios-y-topics)
+- [Estructura de Archivos](#estructura-de-archivos)
+- [Paquetes Relacionados](#paquetes-relacionados)
+- [Troubleshooting](#troubleshooting)
 
-## Configuración de Waypoints
-Los waypoints se definen en `config/waypoints.yaml`. Asegúrate de que las coordenadas coincidan con el archivo `.world` de la simulación.
+---
 
-## Arquitectura de Parámetros de Navegación
+## Arquitectura General
 
-El paquete separa los parámetros de Nav2 según el entorno:
-
-| Entorno | Archivo de parámetros |
-|---|---|
-| **Robot real** | `limo_bringup/param/amcl_params.yaml` |
-| **Simulación** | `limo_mission/config/sim_nav_params.yaml` |
-
-### `config/sim_nav_params.yaml`
-Contiene todas las configuraciones de Nav2 específicas para simulación:
-- `use_sim_time: True` en todos los nodos
-- `set_initial_pose: True` con posición inicial en el área START (`y=-1.0`)
-- `robot_model_type: "nav2_amcl::DifferentialMotionModel"`
-- Lista completa de plugins BT para ROS 2 Humble (incluyendo `nav2_remove_passed_goals_action_bt_node`)
-- `behavior_plugins: ["spin", "backup", "wait"]` (nombre sin guión bajo, requerido por los BT de Humble)
-- Costmaps simplificados (sin `voxel_layer` con cámara de profundidad)
-
-### Arquitectura de launch (simulación)
 ```
-simulation_mission.launch.py
-├── simulation.launch.py          # Gazebo + robot + ros_gz_bridge
-├── limo_start_navigation.launch.py  # Nav2 stack
-│   └── params_file: sim_nav_params.yaml
-└── mission_manager (node)
+                    ┌──────────────────────────────────┐
+                    │     mission_manager_2025          │
+                    │  (Maquina de estados - 15 states) │
+                    └──────────┬───────────────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+   ┌──────▼──────┐    ┌───────▼───────┐    ┌───────▼───────┐
+   │   Nav2       │    │  Perception   │    │ Manipulation  │
+   │ NavigateTo   │    │  AprilTag +   │    │  Dual-Arm     │
+   │ BackUp       │    │  HSV + Camera │    │  Dynamixel +  │
+   │ Costmaps     │    │  Tape Detect  │    │  MyCobot      │
+   └──────┬──────┘    └───────┬───────┘    └───────┬───────┘
+          │                    │                    │
+   ┌──────▼──────┐    ┌───────▼───────┐    ┌───────▼───────┐
+   │   LiDAR     │    │    Camera     │    │  Controllers  │
+   │  /scan      │    │  /camera/*    │    │  arm_ctrl +   │
+   │  Docking    │    │  /apriltag/*  │    │  gripper_ctrl │
+   └─────────────┘    └───────────────┘    └───────────────┘
 ```
 
-### Arquitectura de launch (robot real)
-```
-limo_start.launch           # Base del robot
-cartographer.launch.py      # SLAM / Localización
-navigation2.launch.py       # Nav2 stack
-└── params_file: amcl_params.yaml (por defecto)
-```
+### Flujo de Mision Tipico
 
-## Instrucciones para Simulación
+1. Robot en zona **START**
+2. Recibe lista de tareas (source → destination → object)
+3. **PLANNING**: ordena visitas con heuristica nearest-neighbor, respetando inventario max 3
+4. **NAVIGATING**: Nav2 lleva al robot a la service area, monitoreando cintas por camara
+5. **APPROACHING**: docking LiDAR para alinearse con la mesa
+6. **PERCEIVING**: detecta objetos con AprilTag / HSV
+7. **PICKING**: brazo seleccionado agarra el objeto
+8. **UNDOCKING**: backup para alejarse de la mesa
+9. Repite navegacion al destino → **PLACING**
+10. Al completar todas las tareas → **NAVIGATING_TO_FINISH**
 
-Para ejecutar la misión completa en el entorno de simulación (Gazebo + Nav2 + Mission Manager), sigue estos pasos:
+---
 
-### 1. Compilar el espacio de trabajo
-Es necesario compilar para que el sistema reconozca los nuevos archivos de configuración y launch. Se recomienda usar `--symlink-install` para facilitar cambios en scripts de Python:
+## Nodos Principales
+
+### Mission Manager 2025 (`mission_manager_2025.py`)
+
+Orquestador principal para RoboCup@Work 2025. Implementa una maquina de estados
+jerarquica con 15 estados, soporte dual-arm, deteccion de cintas por camara,
+y planificacion de tareas de transporte.
+
 ```bash
+ros2 run limo_mission mission_manager_2025
+```
+
+**Caracteristicas:**
+- Maquina de estados generica reutilizable (`StateMachine`) con hooks enter/execute/exit
+- Planificacion de rutas con greedy nearest-neighbor TSP
+- Inventario de objetos (max 3 simultaneos, regla RoboCup)
+- Docking LiDAR con control proporcional
+- Deteccion de cintas de piso (rojo/blanco, amarillo/negro, verde)
+- Integracion con Nav2 `NavigateToPose` y `BackUp`
+- Deteccion de objetos via servicio `/manipulation/detect_objects`
+- Seleccion automatica de brazo segun tipo de service area
+
+### Mission Manager (legacy) (`mission_manager.py`)
+
+Orquestador original para 2024. Navegacion lineal basada en rutas YAML con
+docking LiDAR integrado. Sin maquina de estados formal.
+
+```bash
+ros2 run limo_mission mission_manager
+```
+
+### Mission WorkStation (`mission_ws.py`)
+
+Script de prueba con diccionario hardcoded de poses para 18 service areas.
+Incluye parser de mensajes del Atwork Commander (`.bag`) y control lateral LiDAR.
+
+### Dock Server (`dock_server.py`)
+
+Servidor de accion ROS2 (`/dock`) que realiza docking geometrico PCA:
+extrae puntos LiDAR frontales, ajusta una linea via PCA, calcula errores
+x/y/yaw, y controla hasta convergencia.
+
+### Odom to TF (`odom_to_tf_node.py`)
+
+Workaround para bug de `ros_gz_bridge` (#410): publica la TF
+`odom → base_footprint` desde mensajes `/odom`.
+
+---
+
+## Maquina de Estados (2025)
+
+```
+IDLE → INITIALIZING → WAITING_FOR_TASK → PLANNING
+                                            │
+          ┌─────────────────────────────────┘
+          ▼
+     NAVIGATING ──(tape detected)──→ TAPE_DETECTED
+          │                               │
+          │                      ┌────────┴────────┐
+          │                      ▼                  ▼
+          │                 REPLANNING          (green: continue)
+          │                      │
+          │                      └──→ NAVIGATING
+          ▼
+     APPROACHING (LiDAR docking)
+          │
+          ▼
+     PERCEIVING (detect objects)
+          │
+          ├──(no objects)──→ UNDOCKING
+          │
+          ▼
+     PICKING ──(fail, retry)──→ PERCEIVING
+          │
+          ▼
+     UNDOCKING → NAVIGATING (next stop)
+          │
+          ▼ (place action)
+     PLACING → UNDOCKING
+          │
+          ▼ (plan complete)
+     NAVIGATING_TO_FINISH → FINISHED
+
+     ERROR_RECOVERY ← (any error, clears costmaps)
+```
+
+### Estados
+
+| Estado | Descripcion |
+|--------|-------------|
+| `IDLE` | Esperando inicio |
+| `INITIALIZING` | Publica initial pose, espera Nav2 y TFs |
+| `WAITING_FOR_TASK` | Carga tareas desde YAML o genera patrulla por defecto |
+| `PLANNING` | Ordena visitas con nearest-neighbor, respeta inventario max 3 |
+| `NAVIGATING` | Nav2 hacia service area, monitorea cintas por camara |
+| `APPROACHING` | Docking LiDAR fino contra la mesa |
+| `PERCEIVING` | Llama servicio de deteccion, cruza resultados con tareas |
+| `PICKING` | Brazo seleccionado ejecuta pick (retry hasta 2x) |
+| `PLACING` | Place estandar o Precise Placement (detecta cavidades) |
+| `UNDOCKING` | BackUp para alejarse de la mesa |
+| `TAPE_DETECTED` | Evalua tipo de cinta, decide accion |
+| `REPLANNING` | Backup + clear costmaps + reintenta navegacion |
+| `NAVIGATING_TO_FINISH` | Navega a zona FINISH |
+| `FINISHED` | Reporta estadisticas (delivered/failed) |
+| `ERROR_RECOVERY` | Clear costmaps, stop, reintentar estado anterior |
+
+---
+
+## Deteccion de Objetos
+
+### Sets de Objetos
+
+El catalogo completo esta en `limo_manipulation/config/objects_config.yaml`.
+
+#### Basic Set (Rulebook Table 3.1)
+
+| ID | Tipo | Descripcion | Masa |
+|----|------|-------------|------|
+| 1 | `f20_20_b` | Perfil aluminio 20x20mm, negro anodizado | 49g |
+| 2 | `f20_20_g` | Perfil aluminio 20x20mm, gris anodizado | 49g |
+| 3 | `s40_40_b` | Perfil aluminio 40x40mm, negro anodizado | 186g |
+| 4 | `s40_40_g` | Perfil aluminio 40x40mm, gris anodizado | 186g |
+| 5 | `m20_100` | Tornillo M20x100 | 296g |
+| 6 | `nut_m20` | Tuerca M20 | 56g |
+| 7 | `nut_m30` | Tuerca M30 | 217g |
+| 8 | `r20` | Cilindro R20 | 10g |
+
+#### Advanced Set (Table 3.2)
+
+| ID | Tipo | Descripcion | Masa |
+|----|------|-------------|------|
+| 20 | `axis2` | Eje de acero Misumi SFUB25 | 180g |
+| 21 | `bearing2` | Rodamiento SKF YAR203-2F | 100g |
+| 22 | `housing` | Carcasa SKF P40 | 60g |
+| 23 | `motor2` | Motor 755 | 350g |
+| 24 | `spacer` | Espaciador Misumi CLJHJ25 | 50g |
+
+#### Tool Set (Table 3.3)
+
+| ID | Tipo | Descripcion | Masa |
+|----|------|-------------|------|
+| 25 | `screwdriver` | Destornillador WERA 352 hex 2.5mm | 19g |
+| 26 | `wrench` | Llave WERA Jocker 6000, 8mm | 72g |
+| 27 | `drill` | Broca Bosch HSS-Co DIN338 13mm | 10g |
+| 28 | `allen_key` | Llave Allen Wera 8mm 3950 PKL | 10g |
+
+#### Otros
+
+| ID | Tipo | Descripcion |
+|----|------|-------------|
+| 0/100 | `attc_cube` | Cubo ATTC 42mm con AprilTag (simplificacion) |
+| 30 | `container_red` | Contenedor rojo RAL 3020 |
+| 31 | `container_blue` | Contenedor azul RAL 5015 |
+
+### Pipeline de Deteccion
+
+El `object_detector` (paquete `limo_manipulation`) implementa 3 metodos:
+
+1. **AprilTag (primario):** Tags familia 36h11, pose 3D via solvePnP, transformado a frame `map` por TF2
+2. **HSV color (fallback real):** Segmentacion por color en imagen RealSense + depth para posicion 3D
+3. **Config mock (fallback sim):** Posiciones conocidas de `objects_config.yaml → sim_object_positions`
+
+```
+Camara → AprilTag detector → PnP pose → TF2 → map frame → JSON
+                                                    ↓
+                                        /manipulation/detect_objects
+```
+
+### AprilTag
+
+Configuracion en `limo_manipulation/config/apriltag_config.yaml`:
+- Familia: `36h11`
+- Tags para todos los objetos (IDs 1-8, 20-28, 30-31, 100)
+- Cada tag tiene `tag_to_object_offset` para calcular centro de agarre
+- Detector: `decimate_factor=2.0`, `max_hamming_distance=0`
+
+---
+
+## Manipulacion Dual-Arm
+
+### OpenManipulator-X (Dynamixel)
+
+Brazo primario, 4 DOF + gripper, controlado por `ros2_control` con `JointTrajectoryController`.
+
+| Propiedad | Valor |
+|-----------|-------|
+| Namespace de servicios | `/manipulation/pick\|place\|home` |
+| Nodo manager | `/manipulation_manager` |
+| Joints | `joint1..joint4` + `gripper_left_joint` |
+| Controller | `arm_controller` / `gripper_controller` |
+| Driver | Dynamixel (real) / `gz_ros2_control` (sim) |
+
+Poses predefinidas en `limo_manipulation/config/arm_poses.yaml`:
+
+| Pose | Joints [j1, j2, j3, j4] | Uso |
+|------|--------------------------|-----|
+| `home` | [0.0, -1.0, 0.7, 0.3] | Transporte seguro |
+| `scan` | [0.0, 0.5, -0.2, -0.7] | Buscar objetos con camara |
+| `pre_grasp` | [0.0, 0.8, 0.0, -1.0] | Hover 10cm sobre mesa |
+| `grasp` | [0.0, 1.0, 0.2, -1.2] | Nivel de superficie |
+| `carry` | [0.0, -0.5, 0.5, 0.0] | Objeto sostenido alto |
+| `place_ready` | [0.0, 0.5, -0.1, -0.8] | Hover sobre zona de entrega |
+
+### MyCobot
+
+Brazo secundario, usado para shelves y rotating tables.
+
+| Propiedad | Valor |
+|-----------|-------|
+| Namespace de servicios | `/mycobot/pick\|place\|home` |
+| Nodo manager | `/mycobot_manager` |
+
+### Estrategia de Seleccion de Brazo
+
+```python
+if service_area.type in (SH, RT):
+    usar MyCobot       # mejor alcance bajo estantes, agilidad en RT
+else:  # WS, PP, START
+    usar OpenManipulator-X   # brazo primario, mas preciso
+```
+
+Secuencia completa de pick:
+```
+1. open gripper          → gripper_controller (0.019m)
+2. move to scan          → arm_controller     [0.0, 0.5, -0.2, -0.7]
+3. detect objects        → /manipulation/detect_objects
+4. move to pre_grasp     → arm_controller     [0.0, 0.8, 0.0, -1.0]
+5. move to grasp         → arm_controller     [0.0, 1.0, 0.2, -1.2]
+6. close gripper         → posicion segun tipo de objeto
+7. lift to carry         → arm_controller     [0.0, -0.5, 0.5, 0.0]
+```
+
+---
+
+## Deteccion de Cintas
+
+Segun el reglamento RoboCup@Work (Seccion 3.2.4), hay 3 tipos de cintas en el piso:
+
+| Cinta | Significado | Accion del Robot |
+|-------|-------------|------------------|
+| Roja/Blanca | Virtual Wall (Major Collision) | STOP + REPLANNING |
+| Amarilla/Negra | Virtual Obstacle (Tape Collision) | Marcar en costmap + REPLANNING |
+| Verde | Markup (START/FINISH) | Informativo, continuar |
+
+### Implementacion
+
+- **Camara:** suscribe a `/camera/image_raw`
+- **ROI:** analiza solo el 45% inferior de la imagen (donde esta el piso)
+- **Deteccion:** filtrado HSV en espacio de color OpenCV
+  - Rojo/blanco: `min(red_ratio, white_ratio)` — ambos colores presentes indica franjas
+  - Amarillo/negro: `min(yellow_ratio, black_ratio)`
+  - Verde: `green_ratio`
+- **Costmap:** publica `PointCloud2` en `/tape_obstacles` (frame `base_link`, 5 puntos a 0.3m)
+- **Interrupcion:** si intensidad >= `tape_danger_pixel_ratio` durante navegacion, cancela goal Nav2
+
+### Integracion con Nav2
+
+El local costmap tiene una capa `tape_obstacle_layer` que suscribe a `/tape_obstacles`:
+
+```yaml
+tape_obstacle_layer:
+  plugin: "nav2_costmap_2d::ObstacleLayer"
+  observation_sources: tape_camera
+  tape_camera:
+    topic: /tape_obstacles
+    data_type: "PointCloud2"
+    marking: True
+    clearing: False
+```
+
+---
+
+## Navegacion (Nav2)
+
+### Costmaps
+
+**Local costmap** (rolling window 3x3m):
+
+| Capa | Plugin | Fuente |
+|------|--------|--------|
+| `obstacle_layer` | ObstacleLayer | `/scan` (LaserScan) |
+| `tape_obstacle_layer` | ObstacleLayer | `/tape_obstacles` (PointCloud2) |
+| `inflation_layer` | InflationLayer | radius=0.20m, cost_scaling=3.0 |
+
+**Global costmap** (mapa estatico):
+
+| Capa | Plugin |
+|------|--------|
+| `static_layer` | StaticLayer |
+| `inflation_layer` | InflationLayer (radius=0.15m) |
+
+### Parametros del Planner
+
+- **Global:** NavFn con A* (`nav2_navfn_planner/NavfnPlanner`)
+- **Local:** DWB (`dwb_core::DWBLocalPlanner`)
+  - `max_vel_x: 0.26 m/s`, `max_vel_theta: 1.0 rad/s`
+  - `xy_goal_tolerance: 0.25m`, `yaw_goal_tolerance: 0.25 rad`
+- **Behaviors:** spin, backup, wait
+
+### Docking LiDAR
+
+Control proporcional para alinearse con mesas usando LiDAR:
+
+1. Medir distancia frontal (cono de 3°) → error de distancia
+2. Medir distancias laterales (±10°) → error angular (`left - right`)
+3. Control proporcional: `v = kp_lin * err_dist`, `w = kp_ang * err_ang`
+4. Convergencia cuando `|err_dist| < 1cm` y `|err_ang| < 1.5cm`
+
+---
+
+## Archivos de Configuracion
+
+| Archivo | Descripcion |
+|---------|-------------|
+| `config/waypoints_2025.yaml` | 20 service areas del arena 2025 Salvador (START, FINISH, SH01-02, RT01, PP01, WS01-16) |
+| `config/waypoints-sim.yaml` | Waypoints + rutas para simulacion 2024 (WS01, WS02, START) |
+| `config/waypoints.yaml` | Waypoints para robot real (WS3, WS6) |
+| `config/sim_nav_params.yaml` | Parametros completos de Nav2 para simulacion (AMCL, planner, controller, costmaps, BT) |
+| `config/slam_sim_toolbox.yaml` | Configuracion de SLAM Toolbox (async mapping, Ceres solver) |
+| `config/sim_slam.rviz` | Configuracion de RViz para visualizacion SLAM |
+| `config/fastdds_no_shm.xml` | FastDDS sin shared memory (evita problemas IPC en Gazebo) |
+
+### Configuraciones en paquetes relacionados
+
+| Archivo | Paquete | Descripcion |
+|---------|---------|-------------|
+| `arm_poses.yaml` | `limo_manipulation` | Poses articulares del brazo (home, scan, grasp, carry, etc.) |
+| `objects_config.yaml` | `limo_manipulation` | Catalogo completo de objetos: Basic + Advanced + Tools + ATTC + Containers |
+| `apriltag_config.yaml` | `limo_manipulation` | Definiciones AprilTag 36h11 para todos los objetos |
+| `controllers.yaml` | `limo_manipulator_bringup` | ros2_control: arm_controller + gripper_controller a 50Hz |
+
+---
+
+## Launch Files
+
+### `mission_2025.launch.py` — Stack completo 2025
+
+```bash
+ros2 launch limo_mission mission_2025.launch.py
+```
+
+Levanta secuencialmente:
+1. **t=0s:** Gazebo con `atwork_2025.world` + robot
+2. **t=0s:** `odom_to_tf_node` (bridge TF odometria)
+3. **t=20s:** Nav2 (AMCL + planner + controller + BT)
+4. **t=25s:** RViz (opcional)
+5. **t=65s:** `mission_manager_2025` (maquina de estados)
+
+**Argumentos:**
+
+| Argumento | Default | Descripcion |
+|-----------|---------|-------------|
+| `use_sim_time` | `true` | Usar tiempo de simulacion |
+| `enable_manipulation` | `false` | Activar servicios de brazos |
+| `start_rviz` | `true` | Lanzar RViz |
+| `task_yaml` | `""` | Path a YAML de tareas (vacio = patrulla) |
+
+### `simulation_mission.launch.py` — Stack legacy 2024
+
+```bash
+ros2 launch limo_mission simulation_mission.launch.py
+```
+
+### `sim_slam.launch.py` — SLAM en simulacion
+
+```bash
+ros2 launch limo_mission sim_slam.launch.py
+```
+
+Gazebo + SLAM Toolbox + RViz. Usar con `teleop_twist_keyboard` para mapear.
+
+### `real_mission.launch.py` — Robot real
+
+```bash
+ros2 launch limo_mission real_mission.launch.py
+```
+
+### `real_slam.launch.py` — SLAM con robot real
+
+```bash
+ros2 launch limo_mission real_slam.launch.py
+```
+
+---
+
+## Instrucciones de Uso
+
+### Compilar
+
+```bash
+cd ~/Desarrollo/limoatwork
 colcon build --packages-up-to limo_mission --symlink-install
 source install/setup.bash
 ```
 
-### 2. Ejecutar el Launch Unificado
-Este comando levanta automáticamente Gazebo, el stack de navegación y el orquestador de misiones:
+### Mision 2025 (Simulacion)
+
+```bash
+# Mision completa con patrulla por defecto
+ros2 launch limo_mission mission_2025.launch.py
+
+# Con manipulacion activada
+ros2 launch limo_mission mission_2025.launch.py enable_manipulation:=true
+
+# Con tareas especificas
+ros2 launch limo_mission mission_2025.launch.py task_yaml:=/path/to/tasks.yaml
+
+# Sin RViz
+ros2 launch limo_mission mission_2025.launch.py start_rviz:=false
+```
+
+#### Formato de archivo de tareas (`task_yaml`)
+
+```yaml
+tasks:
+  - object_id: 1
+    object_name: f20_20_b
+    source: WS01
+    destination: WS05
+  - object_id: 6
+    object_name: nut_m20
+    source: WS03
+    destination: PP01
+    container_color: red
+```
+
+### Mision Legacy (Simulacion)
+
 ```bash
 ros2 launch limo_mission simulation_mission.launch.py
+ros2 launch limo_mission simulation_mission.launch.py route_name:=full_mission
 ```
 
-### 3. ¿Cómo hacer que el robot se mueva?
-Una vez ejecutado el launch, el flujo automático es el siguiente:
-1.  **Esperar a Nav2:** El sistema espera hasta 30 segundos a que los servidores de navegación (`/navigate_to_pose`) estén listos.
-2.  **Localización Automática:** El `mission_manager` publica una `Initial Pose` en el origen definido (START). Verás en la consola: `Publicando Initial Pose: x=0.0, y=-1.0`.
-3.  **Inicio de la Ruta:** Tras 2 segundos de estabilización, el robot comenzará a moverse hacia el primer waypoint (`WS01`).
-
-### 4. Parámetros opcionales
-Puedes elegir diferentes rutas definidas en `waypoints-sim.yaml`:
-```bash
-# Ruta por defecto: WS01 -> WS02
-ros2 launch limo_mission simulation_mission.launch.py route_name:=test_route
-
-# Ruta extendida: WS01 -> WS02 -> Volver a START
-ros2 launch limo_mission simulation_mission.launch.py route_name:=back_to_start
-```
-
-### Solución de Problemas (Troubleshooting)
-*   **El robot no se mueve:** Verifica que los nodos de Nav2 hayan cargado correctamente. Puedes abrir **RViz** para monitorear el estado:
-    ```bash
-    rviz2 -d $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/rviz/nav2_default_view.rviz
-    ```
-*   **Error "Action server no disponible":** Esto ocurre si Nav2 tarda demasiado en iniciar. El Mission Manager ahora espera 30 segundos, pero si persiste, intenta relanzar el comando.
-
----
-
-## Generar un Mapa en Simulación (SLAM)
-
-Puedes crear un mapa del entorno simulado usando `slam_toolbox` (ya instalado), de manera análoga al flujo del robot real con Cartographer.
-
-> **Nota:** `cartographer_ros` no está instalado en este entorno. Usa `slam_toolbox` en su lugar.
-
-### Opción recomendada: launch unificado `sim_slam.launch.py`
-
-Un solo comando levanta Gazebo, SLAM y RViz con la TF de odometría correcta (`odom_to_tf_node`):
+### SLAM (Mapeo)
 
 ```bash
-source install/setup.bash
+# Terminal 1: lanzar SLAM
 ros2 launch limo_mission sim_slam.launch.py
-```
 
-En otra terminal, cuando la simulación esté lista, mueve el robot para mapear:
-
-```bash
+# Terminal 2: teleop para recorrer la arena
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/cmd_vel
+
+# Terminal 3: guardar mapa cuando este completo
+ros2 run nav2_map_server map_saver_cli -f ~/maps/arena_2025
 ```
 
-**Para evitar desfase entre Gazebo y RViz:** no muevas el robot durante los primeros **10–15 segundos** tras el arranque, para que el origen del mapa (primer scan de SLAM) coincida con el mundo de Gazebo. Luego recorre la arena con el teleop.
-
-**Comprobar alineación (con la simulación en marcha):**
+### Robot Real
 
 ```bash
-# Ver pose del robot en el frame del mapa
-ros2 run tf2_ros tf2_echo map base_footprint
-
-# Ver un mensaje de odometría (frame_id debe ser "odom", child_frame_id "base_footprint")
-ros2 topic echo /odom --once
+ros2 launch limo_mission real_mission.launch.py
 ```
 
-Si la posición en RViz no coincide con Gazebo, revisa que todos los nodos usen `use_sim_time` y que solo `odom_to_tf` publique la TF `odom → base_footprint` (en `sim_slam` el bridge no publica `/tf`).
+### Comandos de Manipulacion (manual)
 
-### Pasos (flujo manual en 4 terminales)
-
-**Terminal 1 — Gazebo (solo el robot, sin navegación):**
 ```bash
-source install/setup.bash
-ros2 launch limo_manipulator_bringup simulation.launch.py
-```
+# Configurar workspace
+ros2 param set /manipulation_manager workspace WS01
 
-**Terminal 2 — SLAM con slam_toolbox:**
-```bash
-source install/setup.bash
-ros2 launch slam_toolbox online_async_launch.py \
-  use_sim_time:=true \
-  scan_topic:=/scan
-```
+# Ejecutar pick (brazo primario)
+ros2 service call /manipulation/pick std_srvs/srv/Trigger {}
 
-**Terminal 3 — RViz para visualizar el mapa en construcción:**
-```bash
-source install/setup.bash
-rviz2 -d $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/rviz/nav2_default_view.rviz
-```
+# Ejecutar place
+ros2 service call /manipulation/place std_srvs/srv/Trigger {}
 
-**Terminal 4 — Mover el robot para explorar el entorno:**
-```bash
-source install/setup.bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/cmd_vel
-```
+# Brazo a home
+ros2 service call /manipulation/home std_srvs/srv/Trigger {}
 
-### Guardar el mapa
-Una vez explorado el entorno, guarda el mapa:
-```bash
-ros2 run nav2_map_server map_saver_cli -f src/limo_ros2/limo_bringup/maps/map_sim
+# Detectar objetos
+ros2 service call /manipulation/detect_objects std_srvs/srv/Trigger {}
 ```
-Esto genera `map_sim.yaml` + `map_sim.pgm`. Para usarlo en la misión:
-```bash
-ros2 launch limo_mission simulation_mission.launch.py \
-  map:=$(pwd)/src/limo_ros2/limo_bringup/maps/map_sim.yaml
-```
-
-### Diferencia con el robot real
-| | Robot real | Simulación |
-|---|---|---|
-| SLAM | `cartographer_ros` | `slam_toolbox` |
-| Topic LiDAR | `/scan_filtered` | `/scan` |
-| `use_sim_time` | `false` | `true` |
-| Launch SLAM | `cartographer.launch.py` | `slam_toolbox online_async_launch.py` |
 
 ---
 
-## Manipulación y Detección de Objetos
+## Parametros del Mission Manager 2025
 
-El paquete `limo_manipulation` implementa el stack completo de percepción y manipulación para el brazo **OpenManipulator-X** y la cámara **Intel RealSense D435**.
+### Navegacion
 
-### Arquitectura del stack de manipulación
+| Parametro | Default | Descripcion |
+|-----------|---------|-------------|
+| `nav_timeout_sec` | 120.0 | Timeout por goal de navegacion |
+| `nav2_startup_timeout_sec` | 120.0 | Tiempo max para esperar Nav2 |
+| `nav_retries` | 3 | Reintentos por service area |
+| `initial_pose_x/y/yaw` | 0.0 | Pose inicial del robot |
 
-```
-manipulation.launch.py
-├── apriltag_sim_publisher  (solo simulación) — publica detecciones sintéticas
-├── apriltag_detector       (solo robot real) — detecta tags desde la cámara
-├── object_detector         — funde detecciones, expone /manipulation/detect
-├── manipulation_manager    — orquesta pick/place via FollowJointTrajectory
-├── detection_visualizer    — dashboard OpenCV en tiempo real
-└── realsense2_camera       (solo robot real) — driver de la cámara
-```
+### Docking
 
-### Detección de objetos
+| Parametro | Default | Descripcion |
+|-----------|---------|-------------|
+| `dock_target_distance` | 0.05 | Distancia objetivo a la mesa (m) |
+| `dock_tol_enter` | 0.01 | Tolerancia para considerar "docked" |
+| `dock_front_cone_deg` | 3.0 | Cono frontal LiDAR (grados) |
+| `dock_kp_lin` | 0.4 | Ganancia proporcional lineal |
+| `dock_kp_ang` | 1.5 | Ganancia proporcional angular |
+| `dock_timeout_sec` | 30.0 | Timeout de docking |
+| `skip_docking` | false | Saltar docking (para pruebas) |
 
-El sistema usa **tres métodos en cascada** de mayor a menor confiabilidad:
+### Manipulacion
 
-| Prioridad | Método | Cuándo se usa |
-|---|---|---|
-| 1 | **AprilTag 36h11** (pose 3D con `solvePnP`) | Simulación y robot real |
-| 2 | **Segmentación HSV** (OpenCV) | Solo robot real, si no hay tags visibles |
-| 3 | **Posiciones mock** (desde `objects_config.yaml`) | Solo simulación, si no hay tags visibles |
+| Parametro | Default | Descripcion |
+|-----------|---------|-------------|
+| `enable_manipulation` | false | Activar brazos roboticos |
+| `manipulation_timeout_sec` | 60.0 | Timeout por operacion pick/place |
+| `detect_timeout_sec` | 10.0 | Timeout para deteccion de objetos |
+| `primary_arm` | `open_manipulator` | ID del brazo primario |
+| `secondary_arm` | `mycobot` | ID del brazo secundario |
+| `primary_arm_ns` | `/manipulation` | Namespace de servicios brazo primario |
+| `secondary_arm_ns` | `/mycobot` | Namespace de servicios brazo secundario |
 
-#### Tags 36h11 definidos por objeto
+### Deteccion de Cintas
 
-| Tag ID | Objeto | Tamaño físico del tag |
-|---|---|---|
-| 0 | `attc_cube` — cubo ATTC | 36 mm |
-| 1 | `f20_20` — perfil F20×20 mm | 18 mm |
-| 2 | `s40_40` — perfil S40×40 mm | 35 mm |
-| 3 | `nut_m20` — tuerca M20 | 25 mm |
-| 4 | Marcador de WS01 | 100 mm |
-| 5 | Marcador de WS02 | 100 mm |
+| Parametro | Default | Descripcion |
+|-----------|---------|-------------|
+| `enable_tape_detection` | true | Activar deteccion por camara |
+| `camera_topic` | `/camera/image_raw` | Topic de imagen |
+| `tape_roi_top_ratio` | 0.55 | Solo analizar 45% inferior de imagen |
+| `tape_min_pixel_ratio` | 0.02 | Umbral minimo de deteccion |
+| `tape_danger_pixel_ratio` | 0.08 | Umbral para interrumpir navegacion |
+| `tape_cooldown_sec` | 3.0 | Cooldown entre interrupciones |
 
-Los tags físicos son de familia **36h11** (estándar de RoboCup @Work).
-Los PNGs para simulación se generan automáticamente en `atwork_arena_description/materials/textures/`.
+---
 
-### Servicios ROS 2 expuestos
+## Servicios y Topics
 
-| Servicio | Tipo | Descripción |
-|---|---|---|
-| `/manipulation/detect` | `std_srvs/Trigger` | Detecta objetos en el workspace actual |
-| `/manipulation/pick` | `std_srvs/Trigger` | Ejecuta la secuencia completa de pick |
-| `/manipulation/place` | `std_srvs/Trigger` | Ejecuta la secuencia completa de place |
-| `/manipulation/home` | `std_srvs/Trigger` | Mueve el brazo a posición home |
+### Topics suscritos
+
+| Topic | Tipo | Descripcion |
+|-------|------|-------------|
+| `/scan` | `LaserScan` | LiDAR para docking y costmap |
+| `/camera/image_raw` | `Image` | Camara para deteccion de cintas |
+| `/odom` | `Odometry` | Odometria (via odom_to_tf_node) |
 
 ### Topics publicados
 
-| Topic | Tipo | Descripción |
-|---|---|---|
-| `/manipulation/detected_objects` | `std_msgs/String` (JSON) | Lista de objetos con pose 3D en frame `map` |
-| `/manipulation/status` | `std_msgs/String` | Estado: `IDLE`, `PICKING`, `CARRYING`, `PLACING` |
-| `/manipulation/debug_image` | `sensor_msgs/Image` | Imagen compuesta con overlays de detección |
+| Topic | Tipo | Descripcion |
+|-------|------|-------------|
+| `/cmd_vel` | `Twist` | Comandos de velocidad (docking) |
+| `/initialpose` | `PoseWithCovarianceStamped` | Pose inicial para AMCL |
+| `/tape_obstacles` | `PointCloud2` | Obstaculos virtuales de cintas |
 
-### Visualizador de detección (OpenCV dashboard)
+### Action clients
 
-El nodo `detection_visualizer` genera una ventana dividida en tiempo real:
+| Action | Tipo | Descripcion |
+|--------|------|-------------|
+| `/navigate_to_pose` | `NavigateToPose` | Navegacion Nav2 |
+| `/backup` | `BackUp` | Retroceder (undocking) |
 
-```
-┌──────────────────────────────┬──────────────────────┐
-│  Camera feed                 │  LIMO MANIPULATION   │
-│                              │  Mode:  SIM / REAL   │
-│  • Quad verde por tag        │  State: PICKING       │
-│  • ID + distancia estimada   │  ───────────────────  │
-│  • Ejes X/Y/Z proyectados    │  Detected objects:   │
-│  • Puntos de colores en      │   [0] attc_cube      │
-│    esquinas del tag          │       dist_xy=0.45 m │
-│                              │  ───────────────────  │
-│                              │  Arm joints (deg):   │
-│                              │   J1 (base):  +0.0   │
-│                              │   J2 (shld): -57.3   │
-│                              │   J3 (elbow):+40.1   │
-│                              │   J4 (wrist):+17.2   │
-│                              │   Gripper:   +12.0   │
-└──────────────────────────────┴──────────────────────┘
-```
+### Service clients
 
-La imagen compuesta también se publica en `/manipulation/debug_image` para verla
-en RViz2 o `rqt_image_view` sin necesidad de display local (útil en Docker).
+| Servicio | Tipo | Descripcion |
+|----------|------|-------------|
+| `/manipulation/pick` | `Trigger` | Pick con brazo primario |
+| `/manipulation/place` | `Trigger` | Place con brazo primario |
+| `/manipulation/home` | `Trigger` | Home con brazo primario |
+| `/manipulation/detect_objects` | `Trigger` | Detectar objetos |
+| `/mycobot/pick\|place\|home` | `Trigger` | Servicios brazo secundario |
 
 ---
 
-### Ejecutar el stack de manipulación
-
-#### Opción A — Misión completa integrada (recomendado)
-
-```bash
-colcon build --packages-up-to limo_manipulation limo_mission --symlink-install
-source install/setup.bash
-ros2 launch limo_mission simulation_mission.launch.py
-
-# Probar servicios manualmente desde otra terminal:
-ros2 service call /manipulation/detect std_srvs/srv/Trigger
-ros2 service call /manipulation/pick   std_srvs/srv/Trigger
-ros2 service call /manipulation/place  std_srvs/srv/Trigger
-ros2 service call /manipulation/home   std_srvs/srv/Trigger
-```
-
-#### Opción B — Solo stack de manipulación (simulación)
-
-```bash
-# Terminal 1 — Gazebo:
-ros2 launch limo_manipulator_bringup simulation.launch.py
-
-# Terminal 2 — Manipulación:
-ros2 launch limo_manipulation manipulation.launch.py use_sim:=true
-```
-
-#### Opción C — Robot real
-
-```bash
-# Terminal 1 — Base:
-ros2 launch limo_bringup limo_start.launch.py
-
-# Terminal 2 — Manipulación + RealSense:
-ros2 launch limo_manipulation manipulation.launch.py use_sim:=false
-```
-
-#### Argumentos disponibles en `manipulation.launch.py`
-
-| Argumento | Default | Descripción |
-|---|---|---|
-| `use_sim` | `true` | `true` = Gazebo, `false` = robot real |
-| `visualize` | `true` | Lanza el dashboard OpenCV |
-| `show_window` | `true` | Abre ventana local `cv2.imshow` |
-| `use_moveit` | `false` | Lanza `move_group` de MoveIt2 |
-| `start_rviz` | `false` | Abre RViz2 con config de manipulación |
-
-#### Visualizar sin display (Docker / SSH)
-
-```bash
-# Sin ventana OpenCV, solo publica el topic:
-ros2 launch limo_manipulation manipulation.launch.py \
-  visualize:=true show_window:=false
-
-# Ver imagen en rqt (local o en red):
-ros2 run rqt_image_view rqt_image_view /manipulation/debug_image
-```
-
-#### Visualización completa con RViz2
-
-```bash
-ros2 launch limo_manipulation manipulation.launch.py \
-  use_sim:=true start_rviz:=true
-```
-
-Incluye: modelo del robot, TF, laser scan, imagen debug y odometría.
-
----
-
-### Integración automática con el Mission Manager
-
-Con `enable_manipulation:=true` el `mission_manager` llama pick/place automáticamente:
-
-```bash
-ros2 launch limo_mission simulation_mission.launch.py \
-  enable_manipulation:=true \
-  manipulation_timeout_sec:=60.0
-```
-
-Flujo automático:
+## Estructura de Archivos
 
 ```
-Nav2 → WS → Docking → /manipulation/pick → BackUp → Nav2 → WS_dest
-                                                          → /manipulation/place
-                                                          → /manipulation/home
+limo_mission/
+├── package.xml
+├── setup.py
+├── setup.cfg
+├── CMakeLists.txt
+├── README.md
+│
+├── config/
+│   ├── waypoints_2025.yaml        # Arena 2025 Salvador
+│   ├── waypoints-sim.yaml         # Simulacion 2024
+│   ├── waypoints.yaml             # Robot real
+│   ├── sim_nav_params.yaml        # Nav2 params (sim)
+│   ├── slam_sim_toolbox.yaml      # SLAM Toolbox config
+│   ├── sim_slam.rviz              # RViz config
+│   └── fastdds_no_shm.xml        # FastDDS sin SHM
+│
+├── launch/
+│   ├── mission_2025.launch.py     # Stack completo 2025
+│   ├── simulation_mission.launch.py # Stack legacy 2024
+│   ├── sim_slam.launch.py        # SLAM simulacion
+│   ├── real_mission.launch.py    # Robot real
+│   └── real_slam.launch.py       # SLAM real
+│
+├── limo_mission/
+│   ├── __init__.py
+│   ├── mission_manager_2025.py    # Orquestador 2025 (15 estados)
+│   ├── mission_manager.py         # Orquestador legacy
+│   ├── mission_ws.py              # Test workstation
+│   ├── dock_server.py             # Docking action server
+│   ├── odom_to_tf_node.py         # Bridge TF odom
+│   └── pick_and_return_example.py # Ejemplo pick-and-return
+│
+├── docs/
+│   └── rulebook.md                # Reglamento RoboCup@Work
+│
+├── scripts/
+│   └── pick_and_return_example.py
+│
+└── test/
+    ├── test_copyright.py
+    ├── test_flake8.py
+    └── test_pep257.py
 ```
 
 ---
 
-### Misión pick-and-place multi-objeto
+## Paquetes Relacionados
 
-Esta sección describe cómo programar una secuencia de recogida y entrega de objetos individuales, usando como ejemplo `obj_f20_1` (perfil F20×20) y `obj_m20_1` (tuerca M20), ambos ubicados en **WS01**.
-
-#### Objetos en simulación
-
-| Objeto | Tipo | Workspace | Posición (x, y, z) |
-|---|---|---|---|
-| `obj_f20_1` | `f20_20` | WS01 | (2.15, -0.35, 0.15) |
-| `obj_m20_1` | `nut_m20` | WS01 | (2.10, -0.30, 0.108) |
-
-El waypoint **WS01** está en `x=2.40, y=0.40` (ver `config/waypoints-sim.yaml`). La zona **START** (base) está en `x=0.0, y=0.0`.
-
-#### Secuencia de la misión
-
-```
-START → WS01 → pick(obj_f20_1) → START → place → home
-      → WS01 → pick(obj_m20_1) → START → place → home
-```
-
-#### Opción A — Misión automática con `mission_manager`
-
-Lanza la simulación con `enable_manipulation:=true` y la ruta `back_to_start`.  
-El `mission_manager` recoge un objeto en cada WS antes de volver a START.
-
-```bash
-# Limpiar procesos previos
-pkill -9 -f "ros2|ign|gz|ruby" 2>/dev/null; sleep 2
-
-# Lanzar misión completa
-ros2 launch limo_mission simulation_mission.launch.py \
-  enable_manipulation:=true \
-  route_name:=back_to_start
-```
-
-> **Nota:** La ruta `back_to_start = [WS01, WS02, START]` recoge un objeto en WS01,
-> otro en WS02 y entrega ambos al llegar a START.  
-> Para entregar tras cada recogida se necesita una ruta personalizada (ver Opción B).
-
-#### Opción B — Script Python (entrega tras cada recogida)
-Ejecutar (con la simulación ya corriendo):
-
-```bash
-# Terminal 1 — simulación
-ros2 launch limo_mission simulation_mission.launch.py
-
-# Terminal 2 — script de misión (esperar ~30 s a que todo inicie)
-source install/setup.bash
-python3 src/limo_mission/scripts/pick_and_return_example.py
-```
-
-#### Opción C — Llamadas manuales desde terminal
-
-Para depurar paso a paso sin código Python:
-
-```bash
-# Monitorear estado de manipulación en tiempo real
-ros2 topic echo /manipulation/status
-
-# ---- obj_f20_1 ------------------------------------------- #
-# Indicar el workspace actual al manipulation_manager
-ros2 param set /manipulation_manager workspace WS01
-
-# Recoger objeto
-ros2 service call /manipulation/pick std_srvs/srv/Trigger {}
-
-# (Mover el robot a START manualmente o con Nav2 goal desde RViz2)
-
-# Soltar objeto
-ros2 service call /manipulation/place std_srvs/srv/Trigger {}
-
-# Brazo a posición de transporte
-ros2 service call /manipulation/home  std_srvs/srv/Trigger {}
-
-# ---- obj_m20_1 ------------------------------------------- #
-ros2 param set /manipulation_manager workspace WS01
-ros2 service call /manipulation/pick  std_srvs/srv/Trigger {}
-# (navegar a START)
-ros2 service call /manipulation/place std_srvs/srv/Trigger {}
-ros2 service call /manipulation/home  std_srvs/srv/Trigger {}
-```
-
-#### Secuencia interna del `pick` (referencia)
-
-Cuando se llama `/manipulation/pick` el `manipulation_manager` ejecuta estos pasos:
-
-```
-1. Abrir gripper              → pose: gripper open  (0.019 m)
-2. Brazo a scan               → joints: [0.0,  0.5, -0.2, -0.7]
-3. Detectar objetos           → llama /manipulation/detect_objects
-4. Brazo a pre_grasp (hover)  → joints: [0.0,  0.8,  0.0, -1.0]
-5. Brazo a grasp (descender)  → joints: [0.0,  1.0,  0.2, -1.2]
-6. Cerrar gripper             → posición según tipo de objeto
-7. Brazo a carry              → joints: [0.0, -0.5,  0.5,  0.0]
-```
-
-El `place` invierte los pasos: `carry` → `place_ready` → abrir gripper → `home`.
-
-> Todos los parámetros de pose están en `limo_manipulation/config/arm_poses.yaml`
-> y pueden ajustarse sin recompilar.
+| Paquete | Descripcion |
+|---------|-------------|
+| `limo_manipulation` | Stack de manipulacion: `manipulation_manager`, `object_detector`, configs de poses/objetos/AprilTag |
+| `limo_manipulator_bringup` | Launch de simulacion Gazebo con ros2_control |
+| `limo_manipulator_description` | URDF integrado LIMO + OpenManipulator-X |
+| `atwork_arena_description` | Mundos Gazebo (2024, 2025), modelos de mesas/estantes/paredes |
+| `limo_mission_msgs` | Interfaces ROS2: accion `Dock` |
+| `limo_bringup` | Launch del robot real, parametros Nav2, mapas |
+| `limo_slam` | SLAM para el robot real |
+| `limo_ros2/limo_base` | Driver base del LIMO (AgileX) |
 
 ---
 
-### Archivos de configuración
+## Troubleshooting
 
-| Archivo | Descripción |
-|---|---|
-| `limo_manipulation/config/arm_poses.yaml` | Poses del brazo: `home`, `scan`, `pre_grasp`, `grasp`, `carry`, `place_ready` |
-| `limo_manipulation/config/objects_config.yaml` | Dimensiones, rangos HSV y posiciones en simulación por tipo de objeto |
-| `limo_manipulation/config/apriltag_config.yaml` | Tags 36h11: ID → tipo de objeto, tamaño físico, offset de agarre |
+### El robot no se mueve
 
-### Diferencia simulación vs robot real (manipulación)
+1. Verificar que Nav2 este listo: buscar en logs `[SM] IDLE -> INITIALIZING`
+2. Verificar TF: `ros2 run tf2_ros tf2_echo map base_footprint`
+3. Verificar odometria: `ros2 topic echo /odom --once`
+4. Si falla AMCL: revisar que el mapa este cargado y la initial pose sea correcta
 
-| | Simulación | Robot real |
-|---|---|---|
-| Cámara | Sensor Gazebo (`camera_link`) | Intel RealSense D435 |
-| Driver cámara | `ros_gz_bridge` | `realsense2_camera` |
-| Detección de tags | `apriltag_sim_publisher` (mock geométrico) | `apriltag_detector` MIT |
-| Fallback detección | Posiciones desde YAML | Segmentación HSV (OpenCV) |
-| `use_sim_time` | `true` | `false` |
+### "Action server not available"
+
+Nav2 tarda en iniciar. El mission_manager espera hasta 120s. Si persiste:
+```bash
+ros2 action list  # verificar que /navigate_to_pose existe
+```
+
+### Manipulacion no funciona
+
+1. Verificar que `enable_manipulation:=true`
+2. Verificar servicios disponibles:
+   ```bash
+   ros2 service list | grep manipulation
+   ```
+3. Verificar arm controller: `ros2 topic echo /arm_controller/joint_trajectory/status`
+
+### Deteccion de cintas falsos positivos
+
+Ajustar umbrales:
+```bash
+ros2 param set /mission_manager_2025 tape_min_pixel_ratio 0.05
+ros2 param set /mission_manager_2025 tape_danger_pixel_ratio 0.12
+```
+
+### Costmap bloqueado por cintas fantasma
+
+```bash
+ros2 service call /local_costmap/clear_entirely_local_costmap std_srvs/srv/Empty {}
+```
+
+### Gazebo + RViz desalineados
+
+No mover el robot los primeros 10-15s tras arranque. Verificar `use_sim_time: true` en todos los nodos.

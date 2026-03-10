@@ -3,7 +3,7 @@ project(limo_manipulator_description)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch urdf
+install(DIRECTORY urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -1,6 +1,5 @@
 """
-"""
-sim_slam.launch.py — Simulation + SLAM + RViz to generate a map
+sim_slam.launch.py -- Simulation + SLAM + RViz to generate a map
 
 Launches:
   1. Gazebo + robot (atwork_2024) with /scan, /odom, /cmd_vel
@@ -20,7 +19,7 @@ Usage:
 Note: For the position in RViz to match Gazebo:
   - The map origin is set by SLAM with the first scan (robot must be at (0,0) in odom).
   - Do not move the robot until SLAM has been active for a few seconds (~10 s after launch).
-  - odom_to_tf_node publishes odom→base_footprint from /odom; if the /tf bridge publishes
+  - odom_to_tf_node publishes odom->base_footprint from /odom; if the /tf bridge publishes
     another transform with different frames, the pose in RViz may drift.
 """
 import os
@@ -61,6 +60,7 @@ def generate_launch_description():
     )
 
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
+    arm = LaunchConfiguration("arm")
 
     # --- Step 1: Simulation (Gazebo + robot); no /tf bridge, we use odom_to_tf ---
     simulation = IncludeLaunchDescription(
@@ -68,10 +68,11 @@ def generate_launch_description():
         launch_arguments={
             "use_sim_time": use_sim_time,
             "bridge_tf": "false",
+            "arm": arm,
         }.items(),
     )
 
-    # --- Odometry: publish TF odom → base_footprint from /odom (/tf bridge can fail) ---
+    # --- Odometry: publish TF odom -> base_footprint from /odom (/tf bridge can fail) ---
     odom_to_tf_node = Node(
         package="limo_mission",
         executable="odom_to_tf_node",
@@ -109,6 +110,10 @@ def generate_launch_description():
     return LaunchDescription([
         set_fastdds,
         DeclareLaunchArgument("use_sim_time", default_value="true"),
+        DeclareLaunchArgument(
+            "arm", default_value="none",
+            choices=["open_manipulator", "mycobot", "none"],
+            description="Arm to mount (none recommended for SLAM mapping)"),
         simulation,
         odom_to_tf_node,
         delayed_slam,

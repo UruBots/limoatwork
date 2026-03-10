@@ -3,15 +3,17 @@
 <package format="3">
   <name>limo_manipulator_description</name>
   <version>0.0.0</version>
-  <description>Integrated URDF for Limo + OpenManipulator-X</description>
+  <description>Integrated URDF for Limo with selectable arm (OpenManipulator-X / MyCobot 280)</description>
   <maintainer email="agilex@todo.todo">agilex</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>limo_description</exec_depend>
-  <exec_depend>open_manipulator_description</exec_depend>
+  <exec_depend>open_manipulator_x_description</exec_depend>
+  <exec_depend>mycobot_description</exec_depend>
   <exec_depend>xacro</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

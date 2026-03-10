@@ -32,6 +32,9 @@ Parameters
   objects_config   string  Absolute path to objects_config.yaml
   detect_timeout   float   Max seconds to wait for detection service (default 10.0)
   motion_timeout   float   Max seconds per arm move (default 15.0)
+  table_height_cm  int     Height of current workspace table in cm (default 10)
+  placement_type   string  "standard"|"shelf"|"container"|"precise_placement"|"rotating_table"
+  gz_world_name    string  Gazebo world name for teleport service (default "atwork_2025")
 
 Typical call sequence from mission_manager
 ------------------------------------------
@@ -86,6 +89,9 @@ class ManipulationManager(Node):
         self.declare_parameter('objects_config', '')
         self.declare_parameter('detect_timeout', 10.0)
         self.declare_parameter('motion_timeout', 15.0)
+        self.declare_parameter('table_height_cm', 10)
+        self.declare_parameter('placement_type', 'standard')
+        self.declare_parameter('gz_world_name', 'atwork_2025')
 
         self._use_sim = self.get_parameter('use_sim').value
 
@@ -181,15 +187,33 @@ class ManipulationManager(Node):
         """Full pick sequence: detect → pre-grasp → grasp → carry."""
         self._publish_status(self.PICKING)
         workspace = self.get_parameter('workspace').value
-        self.get_logger().info(f'[PICK] Starting pick at workspace {workspace}...')
+        height = self.get_parameter('table_height_cm').value
+        placement_type = self.get_parameter('placement_type').value
+        self.get_logger().info(
+            f'[PICK] Starting pick at {workspace} '
+            f'(height={height}cm, type={placement_type})...')
+
+        # Select height/type-appropriate pose names with fallback
+        if placement_type == 'rotating_table':
+            scan_pose = self._get_pose_with_fallback(f'rt_scan', 'scan')
+            pre_grasp_pose = self._get_pose_with_fallback('rt_pre_grasp', 'pre_grasp')
+            grasp_pose = self._get_pose_with_fallback('rt_grasp', 'grasp')
+        elif placement_type == 'shelf':
+            scan_pose = self._get_pose_with_fallback(f'scan_{height}cm', 'scan')
+            pre_grasp_pose = self._get_pose_with_fallback('shelf_pick', 'pre_grasp')
+            grasp_pose = self._get_pose_with_fallback(f'grasp_{height}cm', 'grasp')
+        else:
+            scan_pose = self._get_pose_with_fallback(f'scan_{height}cm', 'scan')
+            pre_grasp_pose = self._get_pose_with_fallback(f'pre_grasp_{height}cm', 'pre_grasp')
+            grasp_pose = self._get_pose_with_fallback(f'grasp_{height}cm', 'grasp')
 
         # 1. Open gripper
         if not self._move_gripper('open'):
             return self._fail(response, 'Failed to open gripper.')
 
         # 2. Move arm to scan pose
-        if not self._move_to_named_pose('scan'):
-            return self._fail(response, 'Failed to reach scan pose.')
+        if not self._move_to_named_pose(scan_pose):
+            return self._fail(response, f'Failed to reach {scan_pose} pose.')
 
         # 3. Detect objects
         detections = self._call_detect()
@@ -206,13 +230,13 @@ class ManipulationManager(Node):
         )
 
         # 4. Pre-grasp pose (hover above object)
-        if not self._move_to_named_pose('pre_grasp'):
-            return self._fail(response, 'Failed to reach pre-grasp pose.')
+        if not self._move_to_named_pose(pre_grasp_pose):
+            return self._fail(response, f'Failed to reach {pre_grasp_pose} pose.')
         time.sleep(self._timing('settle_wait'))
 
         # 5. Grasp pose (lower to object)
-        if not self._move_to_named_pose('grasp'):
-            return self._fail(response, 'Failed to reach grasp pose.')
+        if not self._move_to_named_pose(grasp_pose):
+            return self._fail(response, f'Failed to reach {grasp_pose} pose.')
         time.sleep(self._timing('settle_wait'))
 
         # 6. Close gripper
@@ -235,7 +259,7 @@ class ManipulationManager(Node):
         return response
 
     def _place_cb(self, _req, response):
-        """Place sequence: place_ready → release → retreat."""
+        """Place sequence: place pose → release → retreat."""
         self._publish_status(self.PLACING)
         if self._carried_object is None:
             self.get_logger().warn('[PLACE] No object being carried.')
@@ -243,13 +267,28 @@ class ManipulationManager(Node):
             response.message = 'No object being carried.'
             return response
 
+        placement_type = self.get_parameter('placement_type').value
         self.get_logger().info(
-            f"[PLACE] Placing {self._carried_object['id']}..."
+            f"[PLACE] Placing {self._carried_object['id']} "
+            f"(type={placement_type})..."
         )
 
+        # Select placement-type-appropriate pose
+        place_poses = {
+            'shelf': 'shelf_place',
+            'container': 'container_place',
+            'precise_placement': 'pp_place',
+            'rotating_table': 'rt_place',
+        }
+        preferred = place_poses.get(placement_type)
+        if preferred:
+            place_pose = self._get_pose_with_fallback(preferred, 'place_ready')
+        else:
+            place_pose = 'place_ready'
+
         # 1. Move to placement pose
-        if not self._move_to_named_pose('place_ready'):
-            return self._fail(response, 'Failed to reach place_ready pose.')
+        if not self._move_to_named_pose(place_pose):
+            return self._fail(response, f'Failed to reach {place_pose} pose.')
         time.sleep(self._timing('settle_wait'))
 
         # 2. Open gripper
@@ -438,6 +477,16 @@ class ManipulationManager(Node):
     #  Utility                                                            #
     # ================================================================== #
 
+    def _get_pose_with_fallback(self, preferred: str, fallback: str) -> str:
+        """Return *preferred* if it exists in the poses config, else *fallback*."""
+        poses = self._poses_cfg.get('poses', {})
+        if preferred in poses:
+            self.get_logger().debug(f'Using pose "{preferred}".')
+            return preferred
+        self.get_logger().debug(
+            f'Pose "{preferred}" not in config, falling back to "{fallback}".')
+        return fallback
+
     def _timing(self, key: str) -> float:
         return float(self._poses_cfg.get('timing', {}).get(key, 1.0))
 
@@ -471,9 +520,9 @@ class ManipulationManager(Node):
         if not self._use_sim:
             return
         try:
-            # Hide object underground (simulates being held by gripper)
+            world_name = self.get_parameter('gz_world_name').value
             cmd = [
-                'ign', 'service', '-s', '/world/atwork_2024/set_pose',
+                'ign', 'service', '-s', f'/world/{world_name}/set_pose',
                 '--reqtype', 'ignition.msgs.Pose',
                 '--reptype', 'ignition.msgs.Boolean',
                 '--timeout', '2000',
@@ -498,14 +547,14 @@ class ManipulationManager(Node):
         if not self._use_sim:
             return
         try:
-            # Offset each placed object slightly
+            world_name = self.get_parameter('gz_world_name').value
             ManipulationManager._place_counter += 1
             offset = (ManipulationManager._place_counter - 1) * 0.1
             x = base_x + offset
             y = base_y
 
             cmd = [
-                'ign', 'service', '-s', '/world/atwork_2024/set_pose',
+                'ign', 'service', '-s', f'/world/{world_name}/set_pose',
                 '--reqtype', 'ignition.msgs.Pose',
                 '--reptype', 'ignition.msgs.Boolean',
                 '--timeout', '2000',

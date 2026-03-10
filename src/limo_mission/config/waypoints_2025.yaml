@@ -1,0 +1,159 @@
+# RoboCup@Work 2025 – Salvador arena service areas
+# Coordinates match atwork_2025.world (10m x 7.5m, centred at origin)
+# Positions are approach poses (in front of the table, facing it)
+#
+# Table height distribution (per rulebook 3.2.5):
+#   0cm:  WS05, WS10
+#   5cm:  WS03, WS07, WS13
+#   10cm: WS01, WS02, WS06, WS08, WS11, WS14, WS15
+#   15cm: WS04, WS09, WS12, WS16
+frame_id: map
+
+service_areas:
+  START:
+    type: START
+    x: -3.5
+    y: 2.8
+    yaw: 0.0
+
+  GOAL:
+    type: FINISH
+    x: 4.7
+    y: 3.0
+    yaw: 0.0
+
+  SH01:
+    type: SH
+    x: -1.8
+    y: 2.5
+    yaw: 1.5708
+
+  SH02:
+    type: SH
+    x: 3.3
+    y: 0.5
+    yaw: 1.5708
+
+  RT01:
+    type: RT
+    x: 0.5
+    y: 2.3
+    yaw: 1.5708
+
+  PP01:
+    type: PP
+    x: 2.5
+    y: 2.3
+    yaw: 1.5708
+
+  WS01:
+    type: WS
+    table_height_cm: 10
+    x: -2.0
+    y: 0.3
+    yaw: -0.50
+
+  WS02:
+    type: WS
+    table_height_cm: 10
+    x: -0.5
+    y: 0.8
+    yaw: 0.50
+
+  WS03:
+    type: WS
+    table_height_cm: 5
+    x: -1.5
+    y: -0.7
+    yaw: 0.0
+
+  WS04:
+    type: WS
+    table_height_cm: 15
+    x: -2.5
+    y: -2.7
+    yaw: 0.0
+
+  WS05:
+    type: WS
+    table_height_cm: 0
+    x: -1.0
+    y: -2.9
+    yaw: 0.30
+
+  WS06:
+    type: WS
+    table_height_cm: 10
+    x: -0.5
+    y: -1.7
+    yaw: 0.40
+
+  WS07:
+    type: WS
+    table_height_cm: 5
+    x: 0.0
+    y: -0.2
+    yaw: 0.60
+
+  WS08:
+    type: WS
+    table_height_cm: 10
+    x: 1.0
+    y: 0.3
+    yaw: -0.30
+
+  WS09:
+    type: WS
+    table_height_cm: 15
+    x: 2.0
+    y: 0.3
+    yaw: 0.20
+
+  WS10:
+    type: WS
+    table_height_cm: 0
+    x: 1.0
+    y: -2.2
+    yaw: -0.50
+
+  WS11:
+    type: WS
+    table_height_cm: 10
+    x: 2.2
+    y: -1.9
+    yaw: 0.30
+
+  WS12:
+    type: WS
+    table_height_cm: 15
+    x: 3.5
+    y: -3.2
+    yaw: -0.40
+
+  WS13:
+    type: WS
+    table_height_cm: 5
+    x: 2.5
+    y: -0.5
+    yaw: 0.10
+
+  WS14:
+    type: WS
+    table_height_cm: 10
+    x: 3.5
+    y: 2.3
+    yaw: 0.40
+
+  WS15:
+    type: WS
+    table_height_cm: 10
+    x: -3.5
+    y: 0.3
+    yaw: 0.40
+
+  WS16:
+    type: WS
+    table_height_cm: 15
+    x: 4.0
+    y: -3.7
+    yaw: 0.30

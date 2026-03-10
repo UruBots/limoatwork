@@ -216,7 +216,7 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       transform_tolerance: 2.0
-      plugins: ["obstacle_layer", "inflation_layer"]
+      plugins: ["obstacle_layer", "tape_obstacle_layer", "inflation_layer"]
       rolling_window: true
       width: 3
       height: 3
@@ -239,6 +239,19 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
+      tape_obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: tape_camera
+        tape_camera:
+          topic: /tape_obstacles
+          max_obstacle_height: 1.0
+          obstacle_range: 1.0
+          raytrace_range: 1.5
+          clearing: False
+          marking: True
+          data_type: "PointCloud2"
+          min_obstacle_height: 0.0
       always_send_full_costmap: True
   local_costmap_client:
     ros__parameters:

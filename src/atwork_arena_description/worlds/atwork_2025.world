@@ -1,0 +1,837 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="atwork_2025_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <plugin
+      filename="gz-sim-imu-system"
+      name="gz::sim::systems::Imu">
+    </plugin>
+
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sun</uri>
+    </include>
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Ground Plane</uri>
+    </include>
+
+    <!-- ============================================================ -->
+    <!-- RoboCup @Work World Cup 2025 – Salvador                      -->
+    <!-- Arena: 10 m × 7.5 m   Origin at arena centre                -->
+    <!--   x ∈ [-5, 5]   y ∈ [-3.75, 3.75]                          -->
+    <!--                                                               -->
+    <!-- Table height distribution (per rulebook 3.2.5):              -->
+    <!--   0cm:  WS05, WS10                                           -->
+    <!--   5cm:  WS03, WS07, WS13                                     -->
+    <!--   10cm: WS01, WS02, WS06, WS08, WS11, WS14, WS15            -->
+    <!--   15cm: WS04, WS09, WS12, WS16                               -->
+    <!-- ============================================================ -->
+
+    <!-- ======================== Perimeter Walls =================== -->
+    <model name="arena_walls">
+      <static>true</static>
+      <link name="link">
+        <!-- North wall -->
+        <collision name="wall_n">
+          <pose>0 3.75 0.15 0 0 0</pose>
+          <geometry><box><size>10.0 0.05 0.30</size></box></geometry>
+        </collision>
+        <visual name="wall_n_v">
+          <pose>0 3.75 0.15 0 0 0</pose>
+          <geometry><box><size>10.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+        <!-- South wall -->
+        <collision name="wall_s">
+          <pose>0 -3.75 0.15 0 0 0</pose>
+          <geometry><box><size>10.0 0.05 0.30</size></box></geometry>
+        </collision>
+        <visual name="wall_s_v">
+          <pose>0 -3.75 0.15 0 0 0</pose>
+          <geometry><box><size>10.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+        <!-- West wall -->
+        <collision name="wall_w">
+          <pose>-5.0 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 7.5 0.30</size></box></geometry>
+        </collision>
+        <visual name="wall_w_v">
+          <pose>-5.0 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 7.5 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+        <!-- East wall -->
+        <collision name="wall_e">
+          <pose>5.0 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 7.5 0.30</size></box></geometry>
+        </collision>
+        <visual name="wall_e_v">
+          <pose>5.0 0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 7.5 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ======================== START Area ======================== -->
+    <!-- Green marking tape boundary (rulebook 3.2.4, 3.2.9) -->
+    <model name="start_area">
+      <static>true</static>
+      <pose>-3.5 2.8 0.001 0 0 0</pose>
+      <link name="link">
+        <visual name="floor">
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.0</size></plane></geometry>
+          <material><ambient>0.85 0.95 0.85 0.4</ambient><diffuse>0.85 0.95 0.85 0.4</diffuse></material>
+        </visual>
+        <!-- Green marking tape lines around START -->
+        <visual name="tape_n"><pose>0 0.5 0.001 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+        <visual name="tape_s"><pose>0 -0.5 0.001 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+        <visual name="tape_w"><pose>-0.5 0 0.001 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+        <visual name="tape_e"><pose>0.5 0 0.001 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- ======================== GOAL/FINISH Area ================== -->
+    <model name="goal_area">
+      <static>true</static>
+      <pose>4.7 3.0 0.001 0 0 0</pose>
+      <link name="link">
+        <visual name="floor">
+          <geometry><plane><normal>0 0 1</normal><size>0.6 0.8</size></plane></geometry>
+          <material><ambient>0.85 0.95 0.85 0.4</ambient><diffuse>0.85 0.95 0.85 0.4</diffuse></material>
+        </visual>
+        <visual name="tape_n"><pose>0 0.4 0.001 0 0 0</pose>
+          <geometry><box><size>0.6 0.05 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+        <visual name="tape_s"><pose>0 -0.4 0.001 0 0 0</pose>
+          <geometry><box><size>0.6 0.05 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+        <visual name="tape_w"><pose>-0.3 0 0.001 0 0 0</pose>
+          <geometry><box><size>0.05 0.8 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+        <visual name="tape_e"><pose>0.3 0 0.001 0 0 0</pose>
+          <geometry><box><size>0.05 0.8 0.002</size></box></geometry>
+          <material><ambient>0 0.8 0 1</ambient><diffuse>0 0.8 0 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- =================== Red/White Virtual Wall Tape ============ -->
+    <!-- Per rulebook 3.2.2, 3.2.4: Virtual walls marked with
+         red/white tape. Touching = Major Collision. -->
+    <model name="virtual_walls_tape">
+      <static>true</static>
+      <link name="link">
+        <!-- Virtual wall segment near upper-left corridor -->
+        <visual name="vw1"><pose>-4.0 2.0 0.001 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.002</size></box></geometry>
+          <material><ambient>0.9 0.2 0.2 1</ambient><diffuse>0.9 0.2 0.2 1</diffuse></material></visual>
+        <visual name="vw1_w"><pose>-4.0 2.0 0.003 0 0 0</pose>
+          <geometry><box><size>0.1 0.05 0.002</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+
+        <!-- Virtual wall segment near lower-right area -->
+        <visual name="vw2"><pose>3.0 -1.0 0.001 0 0 0</pose>
+          <geometry><box><size>0.05 1.5 0.002</size></box></geometry>
+          <material><ambient>0.9 0.2 0.2 1</ambient><diffuse>0.9 0.2 0.2 1</diffuse></material></visual>
+        <visual name="vw2_w"><pose>3.0 -1.0 0.003 0 0 0</pose>
+          <geometry><box><size>0.05 0.15 0.002</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+
+        <!-- Virtual wall near centre corridor -->
+        <visual name="vw3"><pose>0.0 -0.5 0.001 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.002</size></box></geometry>
+          <material><ambient>0.9 0.2 0.2 1</ambient><diffuse>0.9 0.2 0.2 1</diffuse></material></visual>
+        <visual name="vw3_w"><pose>0.0 -0.5 0.003 0 0 0</pose>
+          <geometry><box><size>0.05 0.1 0.002</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- ======================== Shelves =========================== -->
+    <!-- SH01 – upper-left, near START -->
+    <include>
+      <name>SH01</name>
+      <uri>model://shelf</uri>
+      <pose>-1.8 3.15 0.0 0 0 0</pose>
+    </include>
+
+    <!-- SH02 – right side, mid-height -->
+    <include>
+      <name>SH02</name>
+      <uri>model://shelf</uri>
+      <pose>3.3 1.2 0.0 0 0 0</pose>
+    </include>
+
+    <!-- ======================== Rotating Table ==================== -->
+    <!-- RT01 (rulebook 3.2.7: height 8-12cm, diameter 50-100cm,
+         WHITE surface, rotating speed 5-20 cm/s) -->
+    <model name="RT01">
+      <static>true</static>
+      <pose>0.5 3.0 0.0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry><cylinder><radius>0.35</radius><length>0.10</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry><cylinder><radius>0.35</radius><length>0.10</length></cylinder></geometry>
+          <material><ambient>1.0 1.0 1.0 1</ambient><diffuse>1.0 1.0 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ======================== Precise Placement ================= -->
+    <!-- PP01 (rulebook 3.2.8: based on standard 10cm table with
+         cavity tiles 140mm x 140mm, max 5 cavities) -->
+    <model name="PP01">
+      <static>true</static>
+      <pose>2.5 3.0 0.0 0 0 0</pose>
+      <link name="link">
+        <!-- Base: standard 10cm table -->
+        <collision name="base_col">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry><box><size>0.5 0.8 0.1</size></box></geometry>
+        </collision>
+        <visual name="base_vis">
+          <pose>0 0 0.05 0 0 0</pose>
+          <geometry><box><size>0.5 0.8 0.1</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+        <!-- Cavity tile slots (5 tiles, 140mm each, 50mm borders) -->
+        <visual name="cavity_1"><pose>0.0 -0.28 0.101 0 0 0</pose>
+          <geometry><box><size>0.14 0.14 0.002</size></box></geometry>
+          <material><ambient>0.4 0.4 0.4 1</ambient><diffuse>0.4 0.4 0.4 1</diffuse></material></visual>
+        <visual name="cavity_2"><pose>0.0 -0.14 0.101 0 0 0</pose>
+          <geometry><box><size>0.14 0.14 0.002</size></box></geometry>
+          <material><ambient>0.5 0.5 0.5 1</ambient><diffuse>0.5 0.5 0.5 1</diffuse></material></visual>
+        <visual name="cavity_3"><pose>0.0 0.0 0.101 0 0 0</pose>
+          <geometry><box><size>0.14 0.14 0.002</size></box></geometry>
+          <material><ambient>0.4 0.4 0.4 1</ambient><diffuse>0.4 0.4 0.4 1</diffuse></material></visual>
+        <visual name="cavity_4"><pose>0.0 0.14 0.101 0 0 0</pose>
+          <geometry><box><size>0.14 0.14 0.002</size></box></geometry>
+          <material><ambient>0.5 0.5 0.5 1</ambient><diffuse>0.5 0.5 0.5 1</diffuse></material></visual>
+        <visual name="cavity_5"><pose>0.0 0.28 0.101 0 0 0</pose>
+          <geometry><box><size>0.14 0.14 0.002</size></box></geometry>
+          <material><ambient>0.4 0.4 0.4 1</ambient><diffuse>0.4 0.4 0.4 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- ======================== Workstations ====================== -->
+    <!-- Heights: 0cm=WS05,WS10  5cm=WS03,WS07,WS13
+                  10cm=WS01,WS02,WS06,WS08,WS11,WS14,WS15
+                  15cm=WS04,WS09,WS12,WS16 -->
+
+    <!-- 10cm tables -->
+    <include><name>WS01</name><uri>model://table_10cm</uri>
+      <pose>-2.0 1.0 0.05 0 0 -0.50</pose></include>
+    <include><name>WS02</name><uri>model://table_10cm</uri>
+      <pose>-0.5 1.5 0.05 0 0 0.50</pose></include>
+    <include><name>WS06</name><uri>model://table_10cm</uri>
+      <pose>-0.5 -1.0 0.05 0 0 0.40</pose></include>
+    <include><name>WS08</name><uri>model://table_10cm</uri>
+      <pose>1.0 1.0 0.05 0 0 -0.30</pose></include>
+    <include><name>WS11</name><uri>model://table_10cm</uri>
+      <pose>2.2 -1.2 0.05 0 0 0.30</pose></include>
+    <include><name>WS14</name><uri>model://table_10cm</uri>
+      <pose>3.5 3.0 0.05 0 0 0.40</pose></include>
+    <include><name>WS15</name><uri>model://table_10cm</uri>
+      <pose>-3.5 1.0 0.05 0 0 0.40</pose></include>
+
+    <!-- 5cm tables -->
+    <include><name>WS03</name><uri>model://table_05cm</uri>
+      <pose>-1.5 0.0 0.025 0 0 0.0</pose></include>
+    <include><name>WS07</name><uri>model://table_05cm</uri>
+      <pose>0.0 0.5 0.025 0 0 0.60</pose></include>
+    <include><name>WS13</name><uri>model://table_05cm</uri>
+      <pose>2.5 0.2 0.025 0 0 0.10</pose></include>
+
+    <!-- 15cm tables -->
+    <include><name>WS04</name><uri>model://table_15cm</uri>
+      <pose>-2.5 -2.0 0.075 0 0 0.0</pose></include>
+    <include><name>WS09</name><uri>model://table_15cm</uri>
+      <pose>2.0 1.0 0.075 0 0 0.20</pose></include>
+    <include><name>WS12</name><uri>model://table_15cm</uri>
+      <pose>3.5 -2.5 0.075 0 0 -0.40</pose></include>
+    <include><name>WS16</name><uri>model://table_15cm</uri>
+      <pose>4.0 -3.0 0.075 0 0 0.30</pose></include>
+
+    <!-- 0cm tables (floor-level per rulebook 3.2.5) -->
+    <include><name>WS05</name><uri>model://table_00cm</uri>
+      <pose>-1.0 -2.2 0.0 0 0 0.30</pose></include>
+    <include><name>WS10</name><uri>model://table_00cm</uri>
+      <pose>1.0 -1.5 0.0 0 0 -0.50</pose></include>
+
+    <!-- =================== Service Area Markings ================== -->
+    <!-- Semi-transparent red floor patches showing manipulation zones -->
+    <model name="service_areas">
+      <static>true</static>
+      <link name="link">
+        <visual name="sa_ws01"><pose>-2.0 1.0 0.002 0 0 -0.50</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws02"><pose>-0.5 1.5 0.002 0 0 0.50</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws03"><pose>-1.5 0.0 0.002 0 0 0.0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws04"><pose>-2.5 -2.0 0.002 0 0 0.0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws05"><pose>-1.0 -2.2 0.002 0 0 0.30</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws06"><pose>-0.5 -1.0 0.002 0 0 0.40</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws07"><pose>0.0 0.5 0.002 0 0 0.60</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws08"><pose>1.0 1.0 0.002 0 0 -0.30</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws09"><pose>2.0 1.0 0.002 0 0 0.20</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws10"><pose>1.0 -1.5 0.002 0 0 -0.50</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws11"><pose>2.2 -1.2 0.002 0 0 0.30</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws12"><pose>3.5 -2.5 0.002 0 0 -0.40</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws13"><pose>2.5 0.2 0.002 0 0 0.10</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws14"><pose>3.5 3.0 0.002 0 0 0.40</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws15"><pose>-3.5 1.0 0.002 0 0 0.40</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_ws16"><pose>4.0 -3.0 0.002 0 0 0.30</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_sh01"><pose>-1.8 3.15 0.002 0 0 0.0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_sh02"><pose>3.3 1.2 0.002 0 0 0.0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_rt01"><pose>0.5 2.3 0.002 0 0 0.0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+        <visual name="sa_pp01"><pose>2.5 3.0 0.002 0 0 0.0</pose>
+          <geometry><plane><normal>0 0 1</normal><size>1.0 1.2</size></plane></geometry>
+          <material><ambient>1 0 0 0.15</ambient><diffuse>1 0 0 0.15</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- ======================= Interior Walls ===================== -->
+    <!-- 16 × Wall (100 cm) + 18 × Wall (40 cm)                      -->
+    <!-- Walls height: 30cm (rulebook: 20-40cm, white with aluminium) -->
+    <model name="interior_walls">
+      <static>true</static>
+      <link name="link">
+
+        <!-- === 100 cm walls (×16) === -->
+        <!-- Left corridor walls (N-S) -->
+        <collision name="w100_01"><pose>-4.5 3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_01_v"><pose>-4.5 3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_02"><pose>-4.5 0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_02_v"><pose>-4.5 0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_03"><pose>-4.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_03_v"><pose>-4.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <!-- Right corridor walls (N-S) -->
+        <collision name="w100_04"><pose>4.5 3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_04_v"><pose>4.5 3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_05"><pose>4.5 0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_05_v"><pose>4.5 0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_06"><pose>4.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_06_v"><pose>4.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <!-- Bottom cross-walls (E-W) -->
+        <collision name="w100_07"><pose>-4.5 -2.5 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry></collision>
+        <visual name="w100_07_v"><pose>-4.5 -2.5 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_08"><pose>4.5 -2.5 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry></collision>
+        <visual name="w100_08_v"><pose>4.5 -2.5 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <!-- Interior dividers (N-S) -->
+        <collision name="w100_09"><pose>-3.0 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_09_v"><pose>-3.0 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_10"><pose>-1.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_10_v"><pose>-1.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_11"><pose>0.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_11_v"><pose>0.5 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_12"><pose>3.0 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry></collision>
+        <visual name="w100_12_v"><pose>3.0 -3.25 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 1.0 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <!-- Interior horizontal dividers (E-W) -->
+        <collision name="w100_13"><pose>-3.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry></collision>
+        <visual name="w100_13_v"><pose>-3.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_14"><pose>0.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry></collision>
+        <visual name="w100_14_v"><pose>0.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_15"><pose>2.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry></collision>
+        <visual name="w100_15_v"><pose>2.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <collision name="w100_16"><pose>4.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry></collision>
+        <visual name="w100_16_v"><pose>4.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>1.0 0.05 0.30</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <!-- === 40 cm walls (×18) === -->
+        <collision name="w40_01"><pose>-4.5 1.8 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_01_v"><pose>-4.5 1.8 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_02"><pose>-4.5 -1.3 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_02_v"><pose>-4.5 -1.3 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_03"><pose>4.5 1.8 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_03_v"><pose>4.5 1.8 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_04"><pose>4.5 -1.3 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_04_v"><pose>4.5 -1.3 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_05"><pose>-2.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_05_v"><pose>-2.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_06"><pose>1.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_06_v"><pose>1.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_07"><pose>3.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_07_v"><pose>3.0 2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_08"><pose>-3.0 0.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_08_v"><pose>-3.0 0.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_09"><pose>-3.0 -1.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_09_v"><pose>-3.0 -1.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_10"><pose>-1.0 -0.2 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_10_v"><pose>-1.0 -0.2 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_11"><pose>0.5 0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_11_v"><pose>0.5 0.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_12"><pose>1.5 -0.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_12_v"><pose>1.5 -0.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_13"><pose>3.5 -0.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry></collision>
+        <visual name="w40_13_v"><pose>3.5 -0.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.05 0.4 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_14"><pose>-2.0 -1.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_14_v"><pose>-2.0 -1.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_15"><pose>0.0 -2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_15_v"><pose>0.0 -2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_16"><pose>1.5 -2.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_16_v"><pose>1.5 -2.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_17"><pose>2.5 -2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_17_v"><pose>2.5 -2.0 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+        <collision name="w40_18"><pose>4.0 -1.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry></collision>
+        <visual name="w40_18_v"><pose>4.0 -1.5 0.15 0 0 0</pose>
+          <geometry><box><size>0.4 0.05 0.30</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.75 0.75 0.75 1</diffuse></material></visual>
+
+      </link>
+    </model>
+
+    <!-- ======================== LiDAR Barriers ==================== -->
+    <!-- Three solid sides (back + left + right) make tables visible
+         to LiDAR at Nav2 costmap level. Front is visual-only so the
+         arm can reach in. Barrier height 30cm, matching wall spec. -->
+
+    <!-- WS01 barrier (10cm table) -->
+    <model name="WS01_barrier"><static>true</static>
+      <pose>-2.0 1.0 0.0 0 0 -0.50</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS02 barrier (10cm) -->
+    <model name="WS02_barrier"><static>true</static>
+      <pose>-0.5 1.5 0.0 0 0 0.50</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS03 barrier (5cm) -->
+    <model name="WS03_barrier"><static>true</static>
+      <pose>-1.5 0.0 0.0 0 0 0.0</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS04 barrier (15cm) -->
+    <model name="WS04_barrier"><static>true</static>
+      <pose>-2.5 -2.0 0.0 0 0 0.0</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS06 barrier (10cm) -->
+    <model name="WS06_barrier"><static>true</static>
+      <pose>-0.5 -1.0 0.0 0 0 0.40</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS07 barrier (5cm) -->
+    <model name="WS07_barrier"><static>true</static>
+      <pose>0.0 0.5 0.0 0 0 0.60</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS08 barrier (10cm) -->
+    <model name="WS08_barrier"><static>true</static>
+      <pose>1.0 1.0 0.0 0 0 -0.30</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS09 barrier (15cm) -->
+    <model name="WS09_barrier"><static>true</static>
+      <pose>2.0 1.0 0.0 0 0 0.20</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS11 barrier (10cm) -->
+    <model name="WS11_barrier"><static>true</static>
+      <pose>2.2 -1.2 0.0 0 0 0.30</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS12 barrier (15cm) -->
+    <model name="WS12_barrier"><static>true</static>
+      <pose>3.5 -2.5 0.0 0 0 -0.40</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS13 barrier (5cm) -->
+    <model name="WS13_barrier"><static>true</static>
+      <pose>2.5 0.2 0.0 0 0 0.10</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS14 barrier (10cm) -->
+    <model name="WS14_barrier"><static>true</static>
+      <pose>3.5 3.0 0.0 0 0 0.40</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS15 barrier (10cm) -->
+    <model name="WS15_barrier"><static>true</static>
+      <pose>-3.5 1.0 0.0 0 0 0.40</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- WS16 barrier (15cm) -->
+    <model name="WS16_barrier"><static>true</static>
+      <pose>4.0 -3.0 0.0 0 0 0.30</pose>
+      <link name="link">
+        <collision name="back"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry></collision>
+        <collision name="left"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <collision name="right"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry></collision>
+        <visual name="back_v"><pose>-0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="left_v"><pose>0.0 0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="right_v"><pose>0.0 -0.40 0.15 0 0 0</pose><geometry><box><size>0.50 0.02 0.30</size></box></geometry>
+          <material><ambient>1 0 0 0.6</ambient><diffuse>1 0 0 0.6</diffuse></material></visual>
+        <visual name="front_v"><pose>0.25 0.0 0.15 0 0 0</pose><geometry><box><size>0.02 0.80 0.30</size></box></geometry>
+          <material><ambient>1 0.5 0 0.3</ambient><diffuse>1 0.5 0 0.3</diffuse></material></visual>
+      </link></model>
+
+    <!-- Note: WS05 (0cm) and WS10 (0cm) don't need LiDAR barriers
+         since they are floor-level and the robot drives over them. -->
+
+    <!-- ========================== Camera ========================== -->
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>0.0 0.0 14.0 0 1.5708 0</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
+  </world>
+</sdf>

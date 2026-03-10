@@ -237,6 +237,8 @@ class ObjectDetector(Node):
         msg.data = payload
         self._det_pub.publish(msg)
 
+        self._publish_debug_image(detections, workspace)
+
         response.success = len(detections) > 0
         response.message = payload
         self.get_logger().info(
@@ -244,6 +246,43 @@ class ObjectDetector(Node):
             f'({"tags" if detections else "none"}).'
         )
         return response
+
+    # ================================================================== #
+    #  Debug image publication                                            #
+    # ================================================================== #
+    def _publish_debug_image(self, detections: list, workspace: str):
+        """Publish an annotated debug image with detection results."""
+        if not _cv_available:
+            return
+        with self._lock:
+            color_msg = getattr(self, '_color_img', None)
+        if color_msg is not None:
+            try:
+                frame = self._bridge.imgmsg_to_cv2(color_msg, 'bgr8')
+            except Exception:
+                frame = np.zeros((480, 640, 3), dtype=np.uint8)
+        else:
+            frame = np.zeros((480, 640, 3), dtype=np.uint8)
+
+        cv2.putText(frame, f'WS: {workspace}', (10, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        cv2.putText(frame, f'Detections: {len(detections)}', (10, 55),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+        for i, det in enumerate(detections):
+            y_pos = 85 + i * 25
+            label = f"{det.get('type', '?')} ({det.get('method', '?')})"
+            pos = f"({det.get('x', 0):.2f}, {det.get('y', 0):.2f}, {det.get('z', 0):.2f})"
+            cv2.putText(frame, f'{label}: {pos}', (10, y_pos),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+
+        try:
+            debug_msg = self._bridge.cv2_to_imgmsg(frame, 'bgr8')
+            debug_msg.header.stamp = self.get_clock().now().to_msg()
+            debug_msg.header.frame_id = self._camera_frame
+            self._debug_pub.publish(debug_msg)
+        except Exception as e:
+            self.get_logger().warn(f'Debug image publish failed: {e}')
 
     # ================================================================== #
     #  Detection method 1: AprilTag → PnP pose                           #

@@ -1,82 +1,175 @@
 # apriltag_config.yaml
-# AprilTag 36h11 definitions for RoboCup @Work objects.
+# AprilTag 36h11 definitions for ALL RoboCup @Work objects.
 #
-# Each tag is printed/attached on a specific @Work object so the robot can:
-#   1. Detect the object type from the tag ID.
-#   2. Estimate the tag's 3D pose from the camera image.
-#   3. Use the known offset (tag_to_object_offset) to compute the object's
-#      grasp centre in the camera frame.
+# Tag IDs match the AtWork Commander object IDs so that an ATTC cube
+# with tag ID N represents object N.  Additional workstation markers
+# use IDs >= 100.
 #
-# tag_size: the physical size of the tag's DATA AREA (outer black border
-#           included), in metres.  This is used for PnP pose estimation.
+# tag_size:  physical size of the DATA AREA (outer black border included),
+#            in metres.  Used for PnP pose estimation.
 #
-# tag_to_object_offset: [x, y, z] metres from the tag face centre to the
-#                        object's grasp centre (in the tag's own frame).
-#                        z > 0 means "above the tag surface".
-#
-# !! RoboCup @Work competition uses the 36h11 family !!
-# Generate PNG files with:
-#   ros2 run limo_manipulation generate_apriltags.py
-# (or use the pre-generated files in atwork_arena_description/materials/textures/)
+# tag_to_object_offset:  [x, y, z] metres from tag face centre to the
+#            object's grasp centre (tag frame).  z > 0 = above tag surface.
 
 tag_family: "36h11"
 
 tags:
-  - id: 0
-    size: 0.036                  # 36 mm tag (fits on 42 mm cube face with border)
-    object_type: attc_cube
-    description: "ATTC Cube (AprilTag Target Cube) — top/front face"
-    tag_to_object_offset: [0.0, 0.0, 0.021]   # cube half-height above tag centre
+
+  # ═══════════ BASIC SET ═══════════
 
   - id: 1
-    size: 0.018                  # 18 mm sticker tag on F20_20 profile
-    object_type: f20_20
-    description: "F20×20 Aluminium Profile — tag on side face"
-    tag_to_object_offset: [0.0, 0.0, 0.010]   # half-width into profile
+    size: 0.018
+    object_type: f20_20_b
+    description: "F20_20_B Aluminium Profile (black)"
+    tag_to_object_offset: [0.0, 0.0, 0.010]
 
   - id: 2
-    size: 0.035                  # 35 mm tag on S40_40 profile (fits on 40 mm face)
-    object_type: s40_40
-    description: "S40×40 Aluminium Profile — tag on side face"
-    tag_to_object_offset: [0.0, 0.0, 0.020]
+    size: 0.018
+    object_type: f20_20_g
+    description: "F20_20_G Aluminium Profile (gray)"
+    tag_to_object_offset: [0.0, 0.0, 0.010]
 
   - id: 3
-    size: 0.025                  # 25 mm tag for M20 nut (placed on table next to it)
-    object_type: nut_m20
-    description: "M20 Hex Nut — tag on reference card placed next to nut"
-    tag_to_object_offset: [0.0, 0.0, 0.008]   # nut half-height
+    size: 0.035
+    object_type: s40_40_b
+    description: "S40_40_B Aluminium Profile (black)"
+    tag_to_object_offset: [0.0, 0.0, 0.020]
 
   - id: 4
-    size: 0.100                  # 100 mm workstation marker (larger for long-range)
-    object_type: workstation_marker
-    description: "Workstation 01 identification marker"
-    tag_to_object_offset: [0.0, 0.0, 0.0]
+    size: 0.035
+    object_type: s40_40_g
+    description: "S40_40_G Aluminium Profile (gray)"
+    tag_to_object_offset: [0.0, 0.0, 0.020]
 
   - id: 5
-    size: 0.100
-    object_type: workstation_marker
-    description: "Workstation 02 identification marker"
+    size: 0.018
+    object_type: m20_100
+    description: "M20x100 Bolt"
+    tag_to_object_offset: [0.0, 0.0, 0.010]
+
+  - id: 6
+    size: 0.025
+    object_type: nut_m20
+    description: "M20 Hex Nut"
+    tag_to_object_offset: [0.0, 0.0, 0.008]
+
+  - id: 7
+    size: 0.035
+    object_type: nut_m30
+    description: "M30 Hex Nut"
+    tag_to_object_offset: [0.0, 0.0, 0.009]
+
+  - id: 8
+    size: 0.018
+    object_type: r20
+    description: "R20 Cylinder"
+    tag_to_object_offset: [0.0, 0.0, 0.010]
+
+  # ═══════════ ADVANCED SET ═══════════
+
+  - id: 20
+    size: 0.022
+    object_type: axis2
+    description: "Axis2 – Steel axis (Misumi SFUB25)"
+    tag_to_object_offset: [0.0, 0.0, 0.013]
+
+  - id: 21
+    size: 0.030
+    object_type: bearing2
+    description: "Bearing2 – SKF YAR203-2F"
+    tag_to_object_offset: [0.0, 0.0, 0.016]
+
+  - id: 22
+    size: 0.030
+    object_type: housing
+    description: "Housing – SKF P40"
+    tag_to_object_offset: [0.0, 0.0, 0.015]
+
+  - id: 23
+    size: 0.035
+    object_type: motor2
+    description: "Motor2 – Motor 755"
+    tag_to_object_offset: [0.0, 0.0, 0.021]
+
+  - id: 24
+    size: 0.025
+    object_type: spacer
+    description: "Spacer – Flanged Spacer (Misumi CLJHJ25)"
+    tag_to_object_offset: [0.0, 0.0, 0.015]
+
+  # ═══════════ TOOL SET ═══════════
+
+  - id: 25
+    size: 0.015
+    object_type: screwdriver
+    description: "Screwdriver – WERA 352 hex 2.5mm"
+    tag_to_object_offset: [0.0, 0.0, 0.008]
+
+  - id: 26
+    size: 0.018
+    object_type: wrench
+    description: "Wrench – WERA Jocker 6000, 8mm"
+    tag_to_object_offset: [0.0, 0.0, 0.010]
+
+  - id: 27
+    size: 0.012
+    object_type: drill
+    description: "Drill – Bosch HSS-Co DIN338 13mm"
+    tag_to_object_offset: [0.0, 0.0, 0.007]
+
+  - id: 28
+    size: 0.008
+    object_type: allen_key
+    description: "Allen Key – Wera 8mm 3950 PKL stainless"
+    tag_to_object_offset: [0.0, 0.0, 0.004]
+
+  # ═══════════ ATTC CUBE (generic) ═══════════
+
+  - id: 0
+    size: 0.036
+    object_type: attc_cube
+    description: "ATTC Cube (AprilTag Target Cube)"
+    tag_to_object_offset: [0.0, 0.0, 0.021]
+
+  # ═══════════ CONTAINERS ═══════════
+
+  - id: 30
+    size: 0.036
+    object_type: container_red
+    description: "Red Container (RAL 3020)"
     tag_to_object_offset: [0.0, 0.0, 0.0]
 
-# ---- Detector settings (passed to apriltag_detector node) ----
+  - id: 31
+    size: 0.036
+    object_type: container_blue
+    description: "Blue Container (RAL 5015)"
+    tag_to_object_offset: [0.0, 0.0, 0.0]
+
+  # ═══════════ WORKSTATION MARKERS ═══════════
+
+  - id: 100
+    size: 0.100
+    object_type: workstation_marker
+    description: "Workstation identification marker (generic)"
+    tag_to_object_offset: [0.0, 0.0, 0.0]
+
+
+# ── Detector settings ──
 detector:
   tag_family:              "36h11"
-  decimate_factor:         2.0    # reduce resolution for speed (1.0 = no decimation)
-  blur:                    0.0    # gaussian blur before detection
+  decimate_factor:         2.0
+  blur:                    0.0
   threads:                 2
-  max_hamming_distance:    0      # 0 = exact match only (more reliable)
+  max_hamming_distance:    0
   refine_edges:            true
 
-# ---- Pose estimation settings ----
+# ── Pose estimation settings ──
 pose:
-  # Minimum tag decision margin to accept a detection as valid
   min_decision_margin:     20.0
-  # Maximum allowed distance for valid detection (metres, in camera frame)
   max_detection_distance:  1.2
-  # Minimum tag pixel area to accept (filters distant/blurry detections)
   min_tag_area_px:         100
 
-# ---- Camera topics ----
+# ── Camera topics ──
 camera:
   image_topic:   "/camera/image_raw"
   info_topic:    "/camera/camera_info"

@@ -24,10 +24,11 @@ class OdomToTfNode(Node):
         super().__init__("odom_to_tf_node")
         self.declare_parameter("odom_topic", "odom")
         self.declare_parameter("publish_tf", True)
-        # If Gazebo uses a prefixed frame (e.g. limo_manipulator/base_footprint),
-        # force base_footprint so SLAM and RViz match the URDF.
+        self.declare_parameter("parent_frame_id", "odom")
         self.declare_parameter("child_frame_id", "base_footprint")
         self.tf_broadcaster = TransformBroadcaster(self)
+        self._parent = self.get_parameter("parent_frame_id").get_parameter_value().string_value
+        self._child = self.get_parameter("child_frame_id").get_parameter_value().string_value
         self.sub = self.create_subscription(
             Odometry,
             self.get_parameter("odom_topic").get_parameter_value().string_value,
@@ -35,17 +36,16 @@ class OdomToTfNode(Node):
             10,
         )
         self.get_logger().info(
-            "Publishing TF from /odom (odom -> base_footprint)"
+            f"Publishing TF from /odom ({self._parent} -> {self._child})"
         )
 
     def odom_cb(self, msg: Odometry):
         if not self.get_parameter("publish_tf").get_parameter_value().bool_value:
             return
         t = TransformStamped()
-        t.header = msg.header
-        t.child_frame_id = (
-            self.get_parameter("child_frame_id").get_parameter_value().string_value
-        )
+        t.header.stamp = msg.header.stamp
+        t.header.frame_id = self._parent
+        t.child_frame_id = self._child
         t.transform.translation.x = msg.pose.pose.position.x
         t.transform.translation.y = msg.pose.pose.position.y
         t.transform.translation.z = msg.pose.pose.position.z
@@ -62,7 +62,8 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

@@ -16,12 +16,15 @@ setup(
             glob('launch/*.py')),
         (os.path.join('share', package_name, 'config'),
             glob('config/*.yaml') + glob('config/*.rviz')),
+        (os.path.join('share', package_name, 'config', 'mycobot_moveit'),
+            glob('config/mycobot_moveit/*.yaml')
+            + glob('config/mycobot_moveit/*.srdf')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='UruBots',
     maintainer_email='team@urubots.com',
-    description='Manipulation stack for LIMO + OpenManipulator-X (RoboCup @Work)',
+    description='Manipulation stack for LIMO + OpenManipulator-X + MyCobot 280 (RoboCup @Work)',
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
@@ -29,6 +32,7 @@ setup(
             'object_detector       = limo_manipulation.object_detector:main',
             'apriltag_sim_publisher = limo_manipulation.apriltag_sim_publisher:main',
             'detection_visualizer  = limo_manipulation.detection_visualizer:main',
+            'mycobot_manager       = limo_manipulation.mycobot_manager:main',
         ],
     },
 )

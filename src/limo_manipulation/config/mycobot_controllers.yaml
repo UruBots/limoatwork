@@ -1,0 +1,49 @@
+# ros2_control configuration for MyCobot 280 (simulation).
+#
+# Defines a JointTrajectoryController for the 6-DOF arm and a separate
+# controller for the gripper. Used when running with ros2_control / Gazebo
+# (use_pymycobot:=false).
+#
+# Joint names match the mycobot_280_arduino URDF.
+
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+
+    mycobot_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    mycobot_gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    mycobot_joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+mycobot_joint_state_broadcaster:
+  ros__parameters:
+    publish_rate: 30.0
+
+mycobot_arm_controller:
+  ros__parameters:
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    joints:
+      - joint2_to_joint1
+      - joint3_to_joint2
+      - joint4_to_joint3
+      - joint5_to_joint4
+      - joint6_to_joint5
+      - joint6output_to_joint6
+
+mycobot_gripper_controller:
+  ros__parameters:
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    joints:
+      - gripper_joint
